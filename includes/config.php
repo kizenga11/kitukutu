@@ -4,26 +4,27 @@
 //  DATABASE CONNECTION
 // ============================================================
 // Local (XAMPP): create DB `kitukutu_db` in phpMyAdmin.
-// Live (InfinityFree): fill in the credentials below when ready.
+// Railway (Production): credentials loaded from environment.
 
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db   = 'kitukutu_db';
+$isRailway = getenv('MYSQLHOST') !== false;
 
-// Switch to InfinityFree credentials when deployed.
-// InfinityFree subdomains typically end with `.epizy.com`.
-$httpHost = strtolower($_SERVER['HTTP_HOST'] ?? '');
-if ($httpHost !== '' && preg_match('/\.epizy\.com$/', $httpHost)) {
-    // TODO: Replace with InfinityFree MySQL credentials.
-    // Example values (placeholders):
-    // $host = 'sqlXXX.epizy.com';
-    // $user = 'epiz_XXXXXXX';
-    // $pass = '...';
-    // $db   = 'epiz_XXXXXXX_kitukutu';
+if ($isRailway) {
+    // Railway (Production)
+    $host = getenv('MYSQLHOST');
+    $port = (int) getenv('MYSQLPORT');
+    $user = getenv('MYSQLUSER');
+    $pass = getenv('MYSQLPASSWORD');
+    $db   = getenv('MYSQLDATABASE');
+} else {
+    // Local (XAMPP)
+    $host = 'localhost';
+    $port = 3306;
+    $user = 'root';
+    $pass = '';
+    $db   = 'kitukutu_db';
 }
 
-$conn = mysqli_connect($host, $user, $pass, $db);
+$conn = mysqli_connect($host, $user, $pass, $db, $port);
 if (!$conn) {
     die('Connection failed: ' . mysqli_connect_error());
 }
@@ -32,7 +33,7 @@ if (!$conn) {
 //  SMS CONFIG
 // ============================================================
 define("SMS_USERNAME", "kizenga");
-define("SMS_API_KEY",  "atsk_f2fc87e307be94d77b944f1fca9eb583e2f268d7d089195b5b01cde5c54fd4cc2549520f"); // <-- badilisha pia!
+define("SMS_API_KEY",  "atsk_f2fc87e307be94d77b944f1fca9eb583e2f268d7d089195b5b01cde5c54fd4cc2549520f");
 define("SMS_SENDER",   "AMALI12");
 
 // ============================================================
