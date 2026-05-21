@@ -84,15 +84,28 @@ if (isset($_GET['ok'])) {
     $msg = $ok_map[$_GET['ok']] ?? '';
 }
 
-/* ── DATA ── */
-$teachers = mysqli_query($conn,"SELECT id,first_name,second_name,last_name,email,phone,sex FROM teachers ORDER BY first_name");
-$admins_q  = mysqli_query($conn,"SELECT id,name,email,role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role,name");
-$subjects  = mysqli_query($conn,"SELECT id,subject_name,stream FROM subjects ORDER BY stream,subject_name");
+/* ── DATA – store everything in arrays to avoid mysqli_data_seek ── */
+
+// Teachers
+$teachers_arr = [];
+$tq = mysqli_query($conn,"SELECT id,first_name,second_name,last_name,email,phone,sex FROM teachers ORDER BY first_name");
+if ($tq) while ($r = mysqli_fetch_assoc($tq)) $teachers_arr[] = $r;
+
+// Admins – try with 'name' column; fallback if column absent
+$admins_arr = [];
+$aq = mysqli_query($conn,"SELECT id, COALESCE(name,'') AS name, email, role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role, email");
+if (!$aq) $aq = mysqli_query($conn,"SELECT id, '' AS name, email, role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role, email");
+if ($aq) while ($r = mysqli_fetch_assoc($aq)) $admins_arr[] = $r;
+
+// Subjects
+$subjects_arr = [];
+$sq = mysqli_query($conn,"SELECT id,subject_name,stream FROM subjects ORDER BY stream,subject_name");
+if ($sq) while ($r = mysqli_fetch_assoc($sq)) $subjects_arr[] = $r;
 
 $counts = [
-    'teacher'    => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM teachers"))['c'],
-    'headmaster' => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM admins WHERE role='headmaster'"))['c'],
-    'academic'   => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM admins WHERE role='academic'"))['c'],
+    'teacher'    => count($teachers_arr),
+    'headmaster' => count(array_filter($admins_arr, fn($a) => $a['role']==='headmaster')),
+    'academic'   => count(array_filter($admins_arr, fn($a) => $a['role']==='academic')),
 ];
 ?>
 <!DOCTYPE html>
@@ -270,7 +283,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
           <div style="margin-bottom:14px;">
             <label class="f-label" style="margin-bottom:6px;">Masomo ya Kufundisha</label>
             <div class="subj-grid">
-              <?php mysqli_data_seek($subjects,0); while($s=mysqli_fetch_assoc($subjects)):
+              <?php foreach($subjects_arr as $s):
                 $sc = $s['stream']==='GENERAL' ? 's-gen' : 's-voc';
                 $sl = $s['stream']==='GENERAL' ? 'General' : 'Voc';
               ?>
@@ -279,7 +292,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
                 <span><?=htmlspecialchars($s['subject_name'])?></span>
                 <span class="subj-stream <?=$sc?>"><?=$sl?></span>
               </label>
-              <?php endwhile; ?>
+              <?php endforeach; ?>
             </div>
           </div>
         </div>
@@ -327,7 +340,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
       <button class="role-tab active" id="ftab-all" onclick="filterRole('all')" style="flex:none;padding:5px 14px;">Wote</button>
       <button class="role-tab" id="ftab-teacher" onclick="filterRole('teacher')" style="flex:none;padding:5px 14px;">Walimu</button>
       <button class="role-tab" id="ftab-headmaster" onclick="filterRole('headmaster')" style="flex:none;padding:5px 14px;">Wakuu</button>
-      <button class="role-tab" id="ftab-academic" onclick="filterRole('academic')" style="flex:none;padding:5px 14px;">Academic</button>
+      <button class="role-tab" id="ftab-academic" onclick="filterRole('academic')" style="flex:none;padding:5px 14px;">Masomo</button>
     </div>
 
     <table class="user-table" id="userTable">
@@ -343,41 +356,42 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
       <tbody>
 
         <!-- TEACHERS -->
-        <?php mysqli_data_seek($teachers,0); $tc=0; while($t=mysqli_fetch_assoc($teachers)): $tc++;
-          $name = htmlspecialchars(trim($t['first_name'].' '.$t['second_name'].' '.$t['last_name']));
+        <?php if(empty($teachers_arr)): ?>
+        <tr class="empty-row"><td colspan="5">Hakuna walimu waliohifadhiwa bado.</td></tr>
+        <?php else: foreach($teachers_arr as $t):
+          $tname = htmlspecialchars(trim($t['first_name'].' '.$t['second_name'].' '.$t['last_name']));
           $asgn = [];
           $ar = mysqli_query($conn,"SELECT s.subject_name FROM teacher_assignments ta JOIN subjects s ON s.id=ta.subject_id WHERE ta.teacher_id='{$t['id']}'");
-          while($a=mysqli_fetch_assoc($ar)) $asgn[] = $a['subject_name'];
+          if ($ar) while($a=mysqli_fetch_assoc($ar)) $asgn[] = $a['subject_name'];
         ?>
-        <tr data-role="teacher" data-search="<?= strtolower($name.' '.$t['email']) ?>">
-          <td data-label="Jina"><div class="uname"><?=$name?></div></td>
+        <tr data-role="teacher" data-search="<?= strtolower($tname.' '.$t['email']) ?>">
+          <td data-label="Jina"><div class="uname"><?=$tname?></div></td>
           <td data-label="Barua Pepe"><span class="uemail"><?=htmlspecialchars($t['email'])?></span></td>
           <td data-label="Nafasi"><span class="rbadge rb-teacher">Mwalimu</span></td>
           <td data-label="Masomo"><span class="uemail"><?= count($asgn)>0 ? htmlspecialchars(implode(', ',$asgn)) : '—' ?></span></td>
           <td data-label="">
             <a href="edit_teacher.php?id=<?=$t['id']?>" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;text-decoration:none;margin-right:4px;" target="mainFrame">Hariri</a>
-            <button class="btn-del" onclick="confirmDel('teacher',<?=$t['id']?>, '<?=$name?>')">Futa</button>
+            <button class="btn-del" onclick="confirmDel('teacher',<?=$t['id']?>, '<?=addslashes($tname)?>')">Futa</button>
           </td>
         </tr>
-        <?php endwhile; if($tc===0): ?>
-        <tr class="empty-row"><td colspan="5">Hakuna walimu waliohifadhiwa bado.</td></tr>
-        <?php endif; ?>
+        <?php endforeach; endif; ?>
 
         <!-- HEADMASTER / ACADEMIC -->
-        <?php mysqli_data_seek($admins_q,0); while($a=mysqli_fetch_assoc($admins_q)):
+        <?php foreach($admins_arr as $a):
           $rclass = $a['role']==='headmaster' ? 'rb-headmaster' : 'rb-academic';
           $rlabel = $a['role']==='headmaster' ? 'Mkuu wa Shule' : 'Mkuu wa Masomo';
+          $aname  = $a['name'] ?: $a['email'];
         ?>
-        <tr data-role="<?=$a['role']?>" data-search="<?= strtolower($a['name'].' '.$a['email']) ?>">
-          <td data-label="Jina"><div class="uname"><?=htmlspecialchars($a['name'])?></div></td>
+        <tr data-role="<?=$a['role']?>" data-search="<?= strtolower($aname.' '.$a['email']) ?>">
+          <td data-label="Jina"><div class="uname"><?=htmlspecialchars($aname)?></div></td>
           <td data-label="Barua Pepe"><span class="uemail"><?=htmlspecialchars($a['email'])?></span></td>
           <td data-label="Nafasi"><span class="rbadge <?=$rclass?>"><?=$rlabel?></span></td>
           <td data-label="Maelezo"><span class="uemail">—</span></td>
           <td data-label="">
-            <button class="btn-del" onclick="confirmDel('admin',<?=$a['id']?>, '<?=htmlspecialchars($a['name'])?>')">Futa</button>
+            <button class="btn-del" onclick="confirmDel('admin',<?=$a['id']?>, '<?=addslashes(htmlspecialchars($aname))?>')">Futa</button>
           </td>
         </tr>
-        <?php endwhile; ?>
+        <?php endforeach; ?>
 
       </tbody>
     </table>
