@@ -32,6 +32,7 @@ $subject_name = $subject['subject_name'];
 
 /* ── Save marks ── */
 $success = false;
+$saved_count = 0;
 if (isset($_POST['save_marks'])) {
     foreach ($_POST['marks'] as $sid => $mark) {
         $sid  = intval($sid);
@@ -49,8 +50,10 @@ if (isset($_POST['save_marks'])) {
         } else {
             mysqli_query($conn, "INSERT INTO marks(student_id,subject_id,exam_id,marks) VALUES('$sid','$subject_id','$exam_id','$mv')");
         }
+        $saved_count++;
     }
     $success = true;
+    $saved_at = time();
 }
 
 /* ── Students ── */
@@ -120,6 +123,8 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
 .pbar-fill { height: 100%; border-radius: 4px; background: var(--primary); transition: width .4s; }
 .pbar-fill.full { background: var(--success); }
 .prog-label { font-size: 11px; font-weight: 700; color: var(--muted); flex-shrink: 0; }
+.prog-saved { font-size: 10px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+.prog-saved i { font-style: normal; display: inline-block; }
 
 /* ── Success toast ── */
 .toast {
@@ -153,6 +158,11 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
 .mark-input:focus { border-color: var(--primary); background: var(--primary-light); }
 .mark-input.has-value { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 .mark-input.absent { border-color: #f59e0b; color: #92400e; background: #fef3c7; }
+.mark-input.changed { border-color: #059669; background: #ecfdf5; }
+.mark-input.changed.absent { border-color: #059669; background: #ecfdf5; color:#92400e; }
+.mark-input.changed.has-value { border-color: #059669; color: #059669; background: #ecfdf5; }
+.changed-dot { width: 6px; height: 6px; border-radius: 50%; background: #059669; flex-shrink: 0; display: none; }
+.changed-dot.show { display: block; }
 
 /* ── Save button ── */
 .save-bar {
@@ -178,8 +188,13 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
 <body>
 
 <?php if ($success): ?>
-<div class="toast show" id="toast">✓ Marks saved successfully</div>
-<script>setTimeout(()=>document.getElementById('toast').classList.remove('show'),2500)</script>
+<div class="toast show" id="toast">✓ <?= $saved_count ?> mark<?= $saved_count !== 1 ? 's' : '' ?> saved</div>
+<script>
+setTimeout(()=>document.getElementById('toast').classList.remove('show'),3000);
+<?php if(isset($saved_at)): ?>
+localStorage.setItem('lastSaved_<?= $exam_id ?>_<?= $subject_id ?>', '<?= date('H:i:s') ?>');
+<?php endif; ?>
+</script>
 <?php endif; ?>
 
 <!-- Topbar -->
@@ -198,6 +213,7 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
              style="width:<?= $total > 0 ? round($filled/$total*100) : 0 ?>%"></div>
     </div>
     <span class="prog-label" id="progLabel"><?= $filled ?>/<?= $total ?> filled</span>
+    <span class="prog-saved" id="savedLabel"></span>
 </div>
 
 <!-- Student list -->
@@ -224,6 +240,7 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
         <?= htmlspecialchars($name) ?>
         <div class="sex"><?= htmlspecialchars($row['sex'] ?? '') ?></div>
     </div>
+    <span class="changed-dot" id="dot-<?= $sid ?>"></span>
     <input type="text" inputmode="numeric"
            class="mark-input <?= $inpCls ?>"
            name="marks[<?= $sid ?>]"
@@ -247,9 +264,20 @@ body { background: var(--bg); font-family: system-ui, -apple-system, sans-serif;
 </form>
 
 <script>
-const inputs  = Array.from(document.querySelectorAll('.mark-input'));
-let filled    = <?= $filled ?>;
-const total   = <?= $total ?>;
+const inputs     = Array.from(document.querySelectorAll('.mark-input'));
+let filled       = <?= $filled ?>;
+const total      = <?= $total ?>;
+const originals  = new Map();
+
+// Store original values to detect changes
+inputs.forEach(inp => originals.set(inp, inp.value));
+
+// Show last saved time
+(function(){
+    var key = 'lastSaved_<?= $exam_id ?>_<?= $subject_id ?>';
+    var t = localStorage.getItem(key);
+    if (t) document.getElementById('savedLabel').textContent = 'Saved ' + t;
+})();
 
 function updateProgress() {
     filled = inputs.filter(i => i.value.trim() !== '').length;
@@ -260,8 +288,24 @@ function updateProgress() {
     document.getElementById('progLabel').textContent = filled + '/' + total + ' filled';
 }
 
+function hasUnsavedChanges() {
+    return inputs.some(inp => inp.value !== originals.get(inp));
+}
+
+// Warn before leaving with unsaved changes
+function onBeforeUnload(e) {
+    if (hasUnsavedChanges()) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+}
+window.addEventListener('beforeunload', onBeforeUnload);
+// Remove warning when submitting form
+document.getElementById('marksForm').addEventListener('submit', function() {
+    window.removeEventListener('beforeunload', onBeforeUnload);
+});
+
 inputs.forEach((inp, idx) => {
-    // Style on load
     styleInput(inp);
 
     inp.addEventListener('input', function () {
@@ -272,8 +316,8 @@ inputs.forEach((inp, idx) => {
         }
         this.value = v;
         styleInput(this);
+        checkChanged(this);
         updateProgress();
-        // Auto-advance when 2+ digits typed or 'A'
         if ((v.length >= 2 && v !== 'A') || v === 'A') {
             const next = inputs[idx + 1];
             if (next) { next.focus(); next.select(); }
@@ -300,6 +344,19 @@ function styleInput(inp) {
     inp.classList.toggle('absent',    v === 'A');
     row.classList.toggle('filled',    v !== '');
 }
+
+function checkChanged(inp) {
+    var changed = inp.value !== originals.get(inp);
+    inp.classList.toggle('changed', changed);
+    var dot = document.getElementById('dot-' + inp.name.match(/\d+/)[0]);
+    if (dot) dot.classList.toggle('show', changed);
+}
+
+// Auto-focus first empty field on load
+(function(){
+    var empty = inputs.find(i => i.value.trim() === '');
+    if (empty) { empty.focus(); empty.select(); }
+})();
 </script>
 </body>
 </html>

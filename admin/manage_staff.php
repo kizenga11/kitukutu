@@ -11,14 +11,22 @@ $msg = $err = '';
 /* ── DELETE ── */
 if (isset($_GET['del_teacher'])) {
     $id = intval($_GET['del_teacher']);
-    mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
-    mysqli_query($conn,"DELETE FROM teachers WHERE id='$id'");
-    header("Location: manage_staff.php?ok=teacher_deleted"); exit();
+    if ($id > 0) {
+        mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
+        $del = mysqli_query($conn,"DELETE FROM teachers WHERE id='$id'");
+        $ok = mysqli_affected_rows($conn) > 0 ? 'teacher_deleted' : 'teacher_not_found';
+    } else { $ok = 'teacher_not_found'; }
+    header("Location: manage_staff.php?ok=$ok"); exit();
 }
 if (isset($_GET['del_admin'])) {
     $id = intval($_GET['del_admin']);
     if ($id == $_SESSION['admin_id']) { $err = "You cannot delete your own account."; }
-    else { mysqli_query($conn,"DELETE FROM admins WHERE id='$id' AND role!='admin'"); header("Location: manage_staff.php?ok=admin_deleted"); exit(); }
+    elseif ($id > 0) {
+        mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
+        $del = mysqli_query($conn,"DELETE FROM admins WHERE id='$id' AND role!='admin'");
+        $ok = mysqli_affected_rows($conn) > 0 ? 'admin_deleted' : 'admin_not_found';
+        header("Location: manage_staff.php?ok=$ok"); exit();
+    } else { header("Location: manage_staff.php?ok=admin_not_found"); exit(); }
 }
 
 /* ── REGISTER ── */
@@ -27,6 +35,11 @@ if (isset($_POST['register'])) {
     $email = mysqli_real_escape_string($conn, trim($_POST['email']));
     $pass  = $_POST['password'] ?? '';
     $pass2 = $_POST['confirm_password'] ?? '';
+    $first = mysqli_real_escape_string($conn, trim($_POST['first_name']));
+    $second = mysqli_real_escape_string($conn, trim($_POST['second_name'] ?? ''));
+    $last  = mysqli_real_escape_string($conn, trim($_POST['last_name']));
+    $sex   = $_POST['sex'] ?? '';
+    $phone = mysqli_real_escape_string($conn, trim($_POST['phone']));
 
     if (!in_array($role, ['teacher','headmaster','academic'])) {
         $err = "Please select a valid role.";
@@ -34,52 +47,52 @@ if (isset($_POST['register'])) {
         $err = "Passwords do not match.";
     } elseif (strlen($pass) < 6) {
         $err = "Password must be at least 6 characters.";
+    } elseif (!preg_match('/^255[0-9]{9}$/', $phone)) {
+        $err = "Phone number must be in format 255XXXXXXXXX";
     } else {
         $hash = password_hash($pass, PASSWORD_DEFAULT);
 
         if ($role === 'teacher') {
-            $first  = mysqli_real_escape_string($conn, trim($_POST['first_name']));
-            $second = mysqli_real_escape_string($conn, trim($_POST['second_name'] ?? ''));
-            $last   = mysqli_real_escape_string($conn, trim($_POST['last_name']));
-            $sex    = $_POST['sex'];
-            $phone  = mysqli_real_escape_string($conn, trim($_POST['phone']));
-
-            if (!preg_match('/^255[0-9]{9}$/', $phone)) {
-                $err = "Phone number must be in format 255XXXXXXXXX";
-            } elseif (mysqli_num_rows(mysqli_query($conn,"SELECT id FROM teachers WHERE email='$email'")) > 0) {
+            if (mysqli_num_rows(mysqli_query($conn,"SELECT id FROM teachers WHERE email='$email'")) > 0) {
                 $err = "This email is already registered.";
             } elseif (mysqli_num_rows(mysqli_query($conn,"SELECT id FROM teachers WHERE phone='$phone'")) > 0) {
                 $err = "This phone number is already registered.";
             } else {
                 $ins = mysqli_query($conn,"INSERT INTO teachers (first_name,second_name,last_name,sex,email,phone,password) VALUES ('$first','$second','$last','$sex','$email','$phone','$hash')");
                 if ($ins) {
-                    $tid = mysqli_insert_id($conn);
-                    if (!empty($_POST['assignments'])) {
-                        foreach ($_POST['assignments'] as $sid) {
-                            $sid = intval($sid);
-                            $sub = mysqli_fetch_assoc(mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$sid'"));
-                            $stream = $sub['stream']; $cs = $stream === 'GENERAL' ? 'B' : 'A';
-                            mysqli_query($conn,"INSERT IGNORE INTO teacher_assignments (teacher_id,subject_id,stream,class_stream) VALUES ('$tid','$sid','$stream','$cs')");
-                        }
-                    }
+                    $uid = mysqli_insert_id($conn);
+                    saveAssignments($conn, $uid);
                     $msg = "Teacher registered successfully.";
                 } else { $err = "Error: ".mysqli_error($conn); }
             }
-
         } else {
-            $name = mysqli_real_escape_string($conn, trim($_POST['name']));
-            if (empty($name)) { $err = "Full name is required."; }
-            elseif (mysqli_num_rows(mysqli_query($conn,"SELECT id FROM admins WHERE email='$email'")) > 0) { $err = "This email is already registered."; }
-            else {
-                $ins = mysqli_query($conn,"INSERT INTO admins (name,email,password,role) VALUES ('$name','$email','$hash','$role')");
-                $msg = $ins ? ucfirst($role)." registered successfully." : "Error: ".mysqli_error($conn);
+            if (mysqli_num_rows(mysqli_query($conn,"SELECT id FROM admins WHERE email='$email'")) > 0) {
+                $err = "This email is already registered.";
+            } else {
+                $ins = mysqli_query($conn,"INSERT INTO admins (first_name,second_name,last_name,sex,phone,email,password,role) VALUES ('$first','$second','$last','$sex','$phone','$email','$hash','$role')");
+                if ($ins) {
+                    $uid = mysqli_insert_id($conn);
+                    saveAssignments($conn, $uid);
+                    $msg = ucfirst($role)." registered successfully.";
+                } else { $err = "Error: ".mysqli_error($conn); }
             }
         }
     }
 }
 
+function saveAssignments($conn, $uid) {
+    if (!empty($_POST['assignments'])) {
+        foreach ($_POST['assignments'] as $sid) {
+            $sid = intval($sid);
+            $sub = mysqli_fetch_assoc(mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$sid'"));
+            $stream = $sub['stream']; $cs = $stream === 'GENERAL' ? 'B' : 'A';
+            mysqli_query($conn,"INSERT IGNORE INTO teacher_assignments (teacher_id,subject_id,stream,class_stream) VALUES ('$uid','$sid','$stream','$cs')");
+        }
+    }
+}
+
 if (isset($_GET['ok'])) {
-    $ok_map = ['teacher_deleted' => 'Teacher deleted.', 'admin_deleted' => 'User deleted.'];
+    $ok_map = ['teacher_deleted' => 'Teacher deleted.', 'admin_deleted' => 'Staff deleted.', 'teacher_not_found' => 'Teacher not found or already deleted.', 'admin_not_found' => 'Staff not found or already deleted.'];
     $msg = $ok_map[$_GET['ok']] ?? '';
 }
 
@@ -89,8 +102,7 @@ $tq = mysqli_query($conn,"SELECT id,first_name,second_name,last_name,email,phone
 if ($tq) while ($r = mysqli_fetch_assoc($tq)) $teachers_arr[] = $r;
 
 $admins_arr = [];
-$aq = mysqli_query($conn,"SELECT id, COALESCE(name,'') AS name, email, role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role, email");
-if (!$aq) $aq = mysqli_query($conn,"SELECT id, '' AS name, email, role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role, email");
+$aq = mysqli_query($conn,"SELECT id, first_name, second_name, last_name, email, role FROM admins WHERE role IN ('headmaster','academic') ORDER BY role, email");
 if ($aq) while ($r = mysqli_fetch_assoc($aq)) $admins_arr[] = $r;
 
 $subjects_arr = [];
@@ -138,8 +150,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
 .btn-submit{background:#1d4ed8;color:#fff;border:none;border-radius:8px;padding:9px 18px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;}
 .btn-submit:hover{background:#1e40af;}
 
-.role-tabs{display:flex;gap:4px;margin-bottom:14px;background:#f3f4f6;padding:4px;border-radius:10px;}
-.role-tab{flex:1;padding:7px;border:none;background:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:#6b7280;transition:all .15s;}
+.role-tab{flex:none;padding:5px 14px;border:none;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;color:#6b7280;background:none;transition:all .15s;}
 .role-tab.active{background:#fff;color:#111827;box-shadow:0 1px 4px rgba(0,0,0,.1);}
 
 .rbadge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;}
@@ -212,90 +223,68 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
   <div class="card-body">
     <div class="reg-panel" id="regPanel">
 
-      <div class="role-tabs">
-        <button class="role-tab" id="tab-teacher"    onclick="switchRole('teacher')"><i class="bi bi-person-badge"></i> Teacher</button>
-        <button class="role-tab" id="tab-headmaster" onclick="switchRole('headmaster')"><i class="bi bi-mortarboard-fill"></i> Headmaster</button>
-        <button class="role-tab" id="tab-academic"   onclick="switchRole('academic')"><i class="bi bi-book-fill"></i> Academic Officer</button>
-      </div>
-
       <form method="POST" id="regForm">
         <input type="hidden" name="register" value="1">
-        <input type="hidden" name="role" id="roleInput" value="teacher">
 
-        <!-- TEACHER fields -->
-        <div id="fields-teacher">
-          <div class="f-grid cols3" style="margin-bottom:10px;">
-            <div><label class="f-label">First Name *</label><input name="first_name" class="f-input" placeholder="First name"></div>
-            <div><label class="f-label">Middle Name</label><input name="second_name" class="f-input" placeholder="Middle name"></div>
-            <div><label class="f-label">Last Name *</label><input name="last_name" class="f-input" placeholder="Last name"></div>
+        <div class="f-grid cols2" style="margin-bottom:10px;">
+          <div>
+            <label class="f-label">Role *</label>
+            <select name="role" class="f-input f-select">
+              <option value="teacher">Teacher</option>
+              <option value="headmaster">Headmaster</option>
+              <option value="academic">Academic Officer</option>
+            </select>
           </div>
-          <div class="f-grid cols3" style="margin-bottom:10px;">
-            <div>
-              <label class="f-label">Gender *</label>
-              <select name="sex" class="f-input f-select">
-                <option value="">Select</option>
-                <option value="M">Male</option>
-                <option value="F">Female</option>
-              </select>
-            </div>
-            <div><label class="f-label">Email *</label><input name="email" type="email" class="f-input" placeholder="teacher@school.tz"></div>
-            <div><label class="f-label">Phone (255XXXXXXXXX) *</label><input name="phone" class="f-input" placeholder="255712345678"></div>
-          </div>
-          <div class="f-grid cols2" style="margin-bottom:14px;">
-            <div>
-              <label class="f-label">Password *</label>
-              <div style="position:relative;">
-                <input name="password" type="password" id="pw1" class="f-input" placeholder="Min. 6 characters" style="padding-right:36px;">
-                <button type="button" onclick="togglePw('pw1',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
-              </div>
-            </div>
-            <div>
-              <label class="f-label">Confirm Password *</label>
-              <div style="position:relative;">
-                <input name="confirm_password" type="password" id="pw2" class="f-input" placeholder="Repeat password" style="padding-right:36px;">
-                <button type="button" onclick="togglePw('pw2',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
-              </div>
-            </div>
-          </div>
+          <div></div>
+        </div>
 
-          <div style="margin-bottom:14px;">
-            <label class="f-label" style="margin-bottom:6px;">Teaching Assignments</label>
-            <div class="subj-grid">
-              <?php foreach($subjects_arr as $s):
-                $sc = $s['stream']==='GENERAL' ? 's-gen' : 's-voc';
-                $sl = $s['stream']==='GENERAL' ? 'General' : 'Voc';
-              ?>
-              <label class="subj-item">
-                <input type="checkbox" name="assignments[]" value="<?=$s['id']?>">
-                <span><?=htmlspecialchars($s['subject_name'])?></span>
-                <span class="subj-stream <?=$sc?>"><?=$sl?></span>
-              </label>
-              <?php endforeach; ?>
+        <div class="f-grid cols3" style="margin-bottom:10px;">
+          <div><label class="f-label">First Name *</label><input name="first_name" class="f-input" placeholder="First name"></div>
+          <div><label class="f-label">Middle Name</label><input name="second_name" class="f-input" placeholder="Middle name"></div>
+          <div><label class="f-label">Last Name *</label><input name="last_name" class="f-input" placeholder="Last name"></div>
+        </div>
+        <div class="f-grid cols3" style="margin-bottom:10px;">
+          <div>
+            <label class="f-label">Gender *</label>
+            <select name="sex" class="f-input f-select">
+              <option value="">Select</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </div>
+          <div><label class="f-label">Email *</label><input name="email" type="email" class="f-input" placeholder="user@school.tz"></div>
+          <div><label class="f-label">Phone (255XXXXXXXXX) *</label><input name="phone" class="f-input" placeholder="255712345678"></div>
+        </div>
+        <div class="f-grid cols2" style="margin-bottom:14px;">
+          <div>
+            <label class="f-label">Password *</label>
+            <div style="position:relative;">
+              <input name="password" type="password" id="pw1" class="f-input" placeholder="Min. 6 characters" style="padding-right:36px;">
+              <button type="button" onclick="togglePw('pw1',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div>
+            <label class="f-label">Confirm Password *</label>
+            <div style="position:relative;">
+              <input name="confirm_password" type="password" id="pw2" class="f-input" placeholder="Repeat password" style="padding-right:36px;">
+              <button type="button" onclick="togglePw('pw2',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
             </div>
           </div>
         </div>
 
-        <!-- HEADMASTER / ACADEMIC fields -->
-        <div id="fields-admin" style="display:none;">
-          <div class="f-grid cols2" style="margin-bottom:10px;">
-            <div><label class="f-label">Full Name *</label><input name="name" class="f-input" placeholder="Full name"></div>
-            <div><label class="f-label">Email *</label><input name="email" type="email" class="f-input" placeholder="user@school.tz"></div>
-          </div>
-          <div class="f-grid cols2" style="margin-bottom:14px;">
-            <div>
-              <label class="f-label">Password *</label>
-              <div style="position:relative;">
-                <input name="password" type="password" id="pw3" class="f-input" placeholder="Min. 6 characters" style="padding-right:36px;">
-                <button type="button" onclick="togglePw('pw3',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
-              </div>
-            </div>
-            <div>
-              <label class="f-label">Confirm Password *</label>
-              <div style="position:relative;">
-                <input name="confirm_password" type="password" id="pw4" class="f-input" placeholder="Repeat password" style="padding-right:36px;">
-                <button type="button" onclick="togglePw('pw4',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;font-size:15px;"><i class="bi bi-eye"></i></button>
-              </div>
-            </div>
+        <div style="margin-bottom:14px;">
+          <label class="f-label" style="margin-bottom:6px;">Subject Assignments</label>
+          <div class="subj-grid">
+            <?php foreach($subjects_arr as $s):
+              $sc = $s['stream']==='GENERAL' ? 's-gen' : 's-voc';
+              $sl = $s['stream']==='GENERAL' ? 'General' : 'Voc';
+            ?>
+            <label class="subj-item">
+              <input type="checkbox" name="assignments[]" value="<?=$s['id']?>">
+              <span><?=htmlspecialchars($s['subject_name'])?></span>
+              <span class="subj-stream <?=$sc?>"><?=$sl?></span>
+            </label>
+            <?php endforeach; ?>
           </div>
         </div>
 
@@ -347,7 +336,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
           <td data-label="Role"><span class="rbadge rb-teacher">Teacher</span></td>
           <td data-label="Subjects"><span class="uemail"><?= count($asgn)>0 ? htmlspecialchars(implode(', ',$asgn)) : '—' ?></span></td>
           <td data-label="">
-            <a href="edit_teacher.php?id=<?=$t['id']?>" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;text-decoration:none;margin-right:4px;" target="mainFrame">Edit</a>
+            <a href="edit_staff.php?type=teacher&id=<?=$t['id']?>" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;text-decoration:none;margin-right:4px;" target="mainFrame">Edit</a>
             <button class="btn-del" onclick="confirmDel('teacher',<?=$t['id']?>,'<?=addslashes($tname)?>')">Delete</button>
           </td>
         </tr>
@@ -357,14 +346,18 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
         <?php foreach($admins_arr as $a):
           $rclass  = $a['role']==='headmaster' ? 'rb-headmaster' : 'rb-academic';
           $rlabel  = $a['role']==='headmaster' ? 'Headmaster'    : 'Academic Officer';
-          $aname   = $a['name'] ?: $a['email'];
+          $aname   = trim($a['first_name'].' '.$a['second_name'].' '.$a['last_name']) ?: $a['email'];
+          $asgn = [];
+          $ar = mysqli_query($conn,"SELECT s.subject_name FROM teacher_assignments ta JOIN subjects s ON s.id=ta.subject_id WHERE ta.teacher_id='{$a['id']}'");
+          if ($ar) while($row=mysqli_fetch_assoc($ar)) $asgn[] = $row['subject_name'];
         ?>
         <tr data-role="<?=$a['role']?>" data-search="<?= strtolower($aname.' '.$a['email']) ?>">
           <td data-label="Name"><div class="uname"><?=htmlspecialchars($aname)?></div></td>
           <td data-label="Email"><span class="uemail"><?=htmlspecialchars($a['email'])?></span></td>
           <td data-label="Role"><span class="rbadge <?=$rclass?>"><?=$rlabel?></span></td>
-          <td data-label="Subjects"><span class="uemail">—</span></td>
+          <td data-label="Subjects"><span class="uemail"><?= count($asgn)>0 ? htmlspecialchars(implode(', ',$asgn)) : '—' ?></span></td>
           <td data-label="">
+            <a href="edit_staff.php?type=admin&id=<?=$a['id']?>" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600;text-decoration:none;margin-right:4px;" target="mainFrame">Edit</a>
             <button class="btn-del" onclick="confirmDel('admin',<?=$a['id']?>,'<?=addslashes(htmlspecialchars($aname))?>')">Delete</button>
           </td>
         </tr>
@@ -375,36 +368,49 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
   </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius:12px;">
+      <div class="modal-body text-center py-4">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:2.5rem;color:#dc2626;"></i>
+        <p style="font-weight:600;color:#111827;margin:10px 0 4px;font-size:15px;">Delete Staff</p>
+        <p style="font-size:13px;color:#6b7280;margin:0;" id="deleteName"></p>
+        <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">This cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center pt-0" style="gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="border-radius:8px;padding:6px 18px;font-weight:600;" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm" style="border-radius:8px;padding:6px 18px;font-weight:600;" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+var delType, delId;
+function confirmDel(type, id, name){
+  delType = type; delId = id;
+  document.getElementById('deleteName').textContent = '"' + name + '"';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function(){
+  window.location.href = 'manage_staff.php?del_' + delType + '=' + delId;
+});
+
 var panelOpen = false;
 function togglePanel(){
   panelOpen = !panelOpen;
   document.getElementById('regPanel').classList.toggle('open', panelOpen);
   document.getElementById('toggleLabel').textContent = panelOpen ? 'Close Form' : 'Open Form';
-  if(panelOpen) switchRole('teacher');
 }
-
-function switchRole(role){
-  document.getElementById('roleInput').value = role;
-  ['teacher','headmaster','academic'].forEach(function(r){
-    document.getElementById('tab-'+r).classList.toggle('active', r===role);
-  });
-  document.getElementById('fields-teacher').style.display = role==='teacher' ? '' : 'none';
-  document.getElementById('fields-admin').style.display   = role!=='teacher' ? '' : 'none';
-}
-
-document.addEventListener('DOMContentLoaded', function(){ switchRole('teacher'); });
 
 function togglePw(id, btn){
   var inp = document.getElementById(id);
   var icon = btn.querySelector('i');
   if(inp.type==='password'){ inp.type='text'; icon.className='bi bi-eye-slash'; }
   else { inp.type='password'; icon.className='bi bi-eye'; }
-}
-
-function confirmDel(type, id, name){
-  if(!confirm('Delete "'+name+'"? This cannot be undone.')) return;
-  window.location.href = 'manage_staff.php?del_'+type+'='+id;
 }
 
 var activeRole = 'all';

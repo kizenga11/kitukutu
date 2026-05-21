@@ -146,6 +146,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
       <a href="notifications.php" target="mainFrame">🔔 Notifications<?php if ($unread_notif > 0): ?> <span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?= $unread_notif ?></span><?php endif; ?></a>
       <a href="teacher_subject_analysis.php" target="mainFrame">📊 Analysis</a>
       <a href="teacher_exam_comparison.php" target="mainFrame">📈 Comparison</a>
+      <a href="view_exam_results.php" target="mainFrame">📋 View Results</a>
     </nav>
   </aside>
 

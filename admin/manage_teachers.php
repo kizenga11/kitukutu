@@ -9,10 +9,18 @@ if(!isset($_SESSION['admin_id'])){
 
 // DELETE TEACHER
 if(isset($_GET['delete'])){
-    $id = $_GET['delete'];
-    mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
-    mysqli_query($conn,"DELETE FROM teachers WHERE id='$id'");
-    $_SESSION['success'] = "Teacher deleted successfully!";
+    $id = intval($_GET['delete']);
+    if ($id > 0) {
+        mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
+        $del = mysqli_query($conn,"DELETE FROM teachers WHERE id='$id'");
+        if (mysqli_affected_rows($conn) > 0) {
+            $_SESSION['success'] = "Teacher deleted successfully!";
+        } else {
+            $_SESSION['error'] = "Teacher not found or already deleted.";
+        }
+    } else {
+        $_SESSION['error'] = "Invalid teacher ID.";
+    }
     header("Location: manage_teachers.php");
     exit();
 }
@@ -397,10 +405,16 @@ if(isset($_GET['delete'])){
             </a>
         </div>
 
-        <!-- Success Alert -->
+        <!-- Success / Error Alert -->
         <?php if(isset($_SESSION['success'])){ ?>
             <div class="alert-modern" style="position:relative;padding-right:2rem;">
                 <i class="bi bi-check-circle-fill"></i> <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+                <button type="button" onclick="this.parentElement.style.display='none'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.2rem;cursor:pointer;">&times;</button>
+            </div>
+        <?php } ?>
+        <?php if(isset($_SESSION['error'])){ ?>
+            <div class="alert-modern" style="position:relative;padding-right:2rem;background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;">
+                <i class="bi bi-exclamation-triangle-fill"></i> <?= $_SESSION['error']; unset($_SESSION['error']); ?>
                 <button type="button" onclick="this.parentElement.style.display='none'" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:1.2rem;cursor:pointer;">&times;</button>
             </div>
         <?php } ?>
@@ -448,11 +462,9 @@ if(isset($_GET['delete'])){
                         <a href="edit_teacher.php?id=<?= $row['id'] ?>" class="btn-edit" target="mainFrame">
                             <i class="bi bi-pencil-square"></i> Edit
                         </a>
-                        <a href="?delete=<?= $row['id'] ?>"
-                           class="btn-delete"
-                           onclick="return confirm('Delete this teacher?')">
+                        <button class="btn-delete" onclick="confirmDel(<?= $row['id'] ?>,'<?= addslashes(htmlspecialchars($row['first_name'].' '.$row['second_name'].' '.$row['last_name'])) ?>')">
                             <i class="bi bi-trash"></i> Delete
-                        </a>
+                        </button>
                     </div>
                 </div>
             <?php
@@ -465,9 +477,36 @@ if(isset($_GET['delete'])){
     </div>
 </div>
 
-<!-- Bootstrap JS (optional) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content" style="border-radius:12px;">
+      <div class="modal-body text-center py-4">
+        <i class="bi bi-exclamation-triangle-fill" style="font-size:2.5rem;color:#dc2626;"></i>
+        <p style="font-weight:600;color:#111827;margin:10px 0 4px;font-size:15px;">Delete Teacher</p>
+        <p style="font-size:13px;color:#6b7280;margin:0;" id="deleteName"></p>
+        <p style="font-size:12px;color:#9ca3af;margin:4px 0 0;">This cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center pt-0" style="gap:8px;">
+        <button type="button" class="btn btn-secondary btn-sm" style="border-radius:8px;padding:6px 18px;font-weight:600;" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm" style="border-radius:8px;padding:6px 18px;font-weight:600;" id="confirmDeleteBtn">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+var delId;
+function confirmDel(id, name){
+  delId = id;
+  document.getElementById('deleteName').textContent = '"' + name + '"';
+  new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function(){
+  window.location.href = '?delete=' + delId;
+});
+
 document.querySelectorAll('.alert-modern').forEach(function(a){setTimeout(function(){a.style.display='none';},5000);});
 </script>
 </body>
