@@ -551,10 +551,10 @@ body {
                 <i class="bi bi-chevron-down gchev"></i>
             </div>
             <ul class="nav-sub">
-                <li><a href="manage_staff.php" target="mainFrame"><i class="bi bi-person-badge-fill"></i> Wafanyakazi</a></li>
-                <li><a href="add_teacher.php" target="mainFrame"><i class="bi bi-person-badge"></i> Ongeza Mwalimu</a></li>
-                <li><a href="add_student.php" target="mainFrame"><i class="bi bi-people"></i> Wanafunzi</a></li>
-                <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Maombi ya Kujiunga</a></li>
+                <li><a href="manage_staff.php" target="mainFrame"><i class="bi bi-person-badge-fill"></i> Manage Staff</a></li>
+                <li><a href="add_teacher.php" target="mainFrame"><i class="bi bi-person-badge"></i> Add Teacher</a></li>
+                <li><a href="add_student.php" target="mainFrame"><i class="bi bi-people"></i> Students</a></li>
+                <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Admissions</a></li>
             </ul>
         </li>
 
