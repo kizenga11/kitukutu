@@ -13,7 +13,10 @@
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root kitukutu_db -e \"DESCRIBE teacher_weekly_tests; SELECT id,test_name,subject_id,class_stream,is_active,date FROM teacher_weekly_tests WHERE teacher_id=2 LIMIT 5;\" 2>&1)",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root kitukutu_db -e \"SELECT twt.id,twt.test_name,twt.subject_id,twt.class_stream,twt.date,s.subject_name FROM teacher_weekly_tests twt JOIN subjects s ON s.id=twt.subject_id WHERE twt.teacher_id=2 ORDER BY twt.date DESC LIMIT 5; SELECT ta.id,ta.subject_id,ta.stream,ta.class_stream,s.subject_name FROM teacher_assignments ta JOIN subjects s ON s.id=ta.subject_id WHERE ta.teacher_id=2;\" 2>&1)",
       "Bash(php -r 'include '\\\\''includes/config.php'\\\\''; $r=mysqli_query\\($conn,'\\\\''DESCRIBE admins'\\\\''\\); while\\($row=mysqli_fetch_assoc\\($r\\)\\) echo $row['\\\\''Field'\\\\''].'\\\\'' '\\\\''.$row['\\\\''Type'\\\\''].'\\\\''\\\\n'\\\\'';')",
-      "PowerShell(New-Item *)"
+      "PowerShell(New-Item *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)"
     ]
   }
 }
