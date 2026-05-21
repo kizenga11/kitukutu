@@ -551,7 +551,7 @@ body {
                 <i class="bi bi-chevron-down gchev"></i>
             </div>
             <ul class="nav-sub">
-                <li><a href="add_teacher.php" target="mainFrame"><i class="bi bi-person-badge"></i> Teachers</a></li>
+                <li><a href="manage_staff.php" target="mainFrame"><i class="bi bi-person-badge-fill"></i> Staff (Wafanyakazi)</a></li>
                 <li><a href="add_student.php" target="mainFrame"><i class="bi bi-people"></i> Students</a></li>
                 <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Admissions</a></li>
             </ul>
