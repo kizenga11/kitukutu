@@ -13,16 +13,18 @@ $exam = mysqli_fetch_assoc(mysqli_query($conn,
 ));
 if(!$exam){ header("Location: index.php"); exit(); }
 
-/* Build per-student results: average all their marks in this exam */
+/* Build per-student results */
 $marks_q = mysqli_query($conn,"
     SELECT s.id AS student_id,
            CONCAT(s.first_name,' ',s.last_name) AS student_name,
            s.sex, s.stream,
            AVG(CASE WHEN m.marks REGEXP '^[0-9]+$' THEN CAST(m.marks AS DECIMAL(5,2)) ELSE NULL END) AS avg_mark,
-           COUNT(m.id) AS subject_count
+           COUNT(m.id) AS subject_count,
+           ers.division
     FROM students s
     JOIN marks m ON m.student_id=s.id AND m.exam_id='$exam_id'
-    GROUP BY s.id
+    LEFT JOIN exam_results_summary ers ON ers.student_id=s.id AND ers.exam_id='$exam_id'
+    GROUP BY s.id, ers.division
     HAVING subject_count > 0
     ORDER BY avg_mark DESC
 ");
@@ -120,6 +122,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 /* Grade pill */
 .grade-pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;font-weight:700;}
 
+/* Division pill */
+.div-pill{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:800;letter-spacing:.3px;}
+.div-I  {background:#d1fae5;color:#065f46;}
+.div-II {background:#dbeafe;color:#1e40af;}
+.div-III{background:#fef3c7;color:#92400e;}
+.div-IV {background:#ffedd5;color:#9a3412;}
+.div-0  {background:#fee2e2;color:#991b1b;}
+.div-na {background:#f3f4f6;color:#6b7280;}
+
 /* Empty */
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .empty svg{display:block;margin:0 auto 12px;opacity:.3;}
@@ -209,6 +220,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       <option value="M">Wanaume</option>
       <option value="F">Wanawake</option>
     </select>
+    <select id="divFilter" onchange="filterRows()">
+      <option value="">Division yote</option>
+      <option value="I">Division I</option>
+      <option value="II">Division II</option>
+      <option value="III">Division III</option>
+      <option value="IV">Division IV</option>
+      <option value="0">Division 0</option>
+    </select>
   </div>
 
   <?php if(empty($results)): ?>
@@ -227,6 +246,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <th>Mkondo</th>
         <th>Wastani</th>
         <th>Daraja</th>
+        <th>Division</th>
       </tr>
     </thead>
     <tbody>
@@ -236,8 +256,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
       $bar_pct = min(100, $avg);
       $stream_label = strtolower($r['stream'] ?? '') === 'vocational' ? 'Vocational' : 'General';
       $stream_class = $stream_label === 'Vocational' ? 'stream-voc' : 'stream-gen';
+      $div_raw = $r['division'] ?? '';
+      $div_display = $div_raw !== '' ? $div_raw : '–';
+      $div_css = match($div_raw) {
+          'I'   => 'div-I',
+          'II'  => 'div-II',
+          'III' => 'div-III',
+          'IV'  => 'div-IV',
+          '0'   => 'div-0',
+          default => 'div-na',
+      };
     ?>
-      <tr data-name="<?= strtolower($r['student_name']) ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>">
+      <tr data-name="<?= strtolower($r['student_name']) ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>" data-div="<?= htmlspecialchars($div_raw) ?>">
         <td data-label="#"><span class="pos-num"><?= $pos++ ?></span></td>
         <td data-label="Jina">
           <div class="stu-name"><?= htmlspecialchars($r['student_name']) ?></div>
@@ -252,6 +282,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           </div>
         </td>
         <td data-label="Daraja"><span class="grade-pill" style="background:<?= $gbg ?>;color:<?= $gcol ?>"><?= $grade ?></span></td>
+        <td data-label="Division"><span class="div-pill <?= $div_css ?>"><?= htmlspecialchars($div_display) ?></span></td>
       </tr>
     <?php endforeach; ?>
     </tbody>
@@ -265,11 +296,13 @@ function filterRows(){
   var search = document.getElementById('searchInput').value.toLowerCase();
   var stream = document.getElementById('streamFilter').value;
   var sex    = document.getElementById('sexFilter').value;
+  var div    = document.getElementById('divFilter').value;
   document.querySelectorAll('#resultsTable tbody tr').forEach(function(tr){
-    var name   = tr.dataset.name || '';
-    var s      = tr.dataset.stream || '';
-    var g      = tr.dataset.sex || '';
-    var show   = name.includes(search) && (!stream || s===stream) && (!sex || g===sex);
+    var name = tr.dataset.name  || '';
+    var s    = tr.dataset.stream|| '';
+    var g    = tr.dataset.sex   || '';
+    var d    = tr.dataset.div   || '';
+    var show = name.includes(search) && (!stream || s===stream) && (!sex || g===sex) && (!div || d===div);
     tr.style.display = show ? '' : 'none';
   });
 }

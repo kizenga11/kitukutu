@@ -1,7 +1,7 @@
 <?php
 session_start();
 include "../includes/config.php";
-if(!isset($_SESSION['admin_id'])||($_SESSION['user_role']??'')==='teacher'){header("Location: ../login.php");exit();}
+if(!isset($_SESSION['admin_id'])||($_SESSION['user_role']??'')!=='headmaster'){header("Location: ../login.php");exit();}
 
 $year  = mysqli_fetch_assoc(mysqli_query($conn,"SELECT year_name FROM academic_years WHERE is_active=1 LIMIT 1")) ?? [];
 $term  = mysqli_fetch_assoc(mysqli_query($conn,"SELECT term_name FROM terms WHERE is_active=1 LIMIT 1")) ?? [];
