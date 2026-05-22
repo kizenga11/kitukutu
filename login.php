@@ -5,7 +5,7 @@ ini_set('display_errors', 1);
 session_start();
 include "includes/config.php";
 
-if(isset($_POST['login'])){
+if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['password'])){
     $email    = mysqli_real_escape_string($conn, $_POST['email']);
     $password = $_POST['password'];
 
@@ -40,11 +40,11 @@ if(isset($_POST['login'])){
         }
     }
 
-    $error = "Barua pepe au neno la siri si sahihi.";
+    $error = "Incorrect email address or password.";
 }
 ?>
 <!DOCTYPE html>
-<html lang="sw">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -133,7 +133,18 @@ body{
   background:#fef2f2;border:1px solid #fca5a5;color:#dc2626;
   border-radius:10px;padding:10px 14px;font-size:0.85rem;
   display:flex;align-items:center;gap:8px;margin-bottom:20px;
+  transition:opacity 0.4s,transform 0.4s;
+  position:relative;padding-right:36px;
 }
+.error-box.hiding{opacity:0;transform:translateY(-8px);}
+.error-box .close-btn{
+  position:absolute;top:50%;right:10px;transform:translateY(-50%);
+  background:none;border:none;color:#dc2626;cursor:pointer;
+  font-size:1.1rem;padding:4px;line-height:1;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0.6;transition:opacity 0.2s;
+}
+.error-box .close-btn:hover{opacity:1;background:#fde8e8;}
 
 .field{margin-bottom:18px;}
 .field label{
@@ -258,8 +269,9 @@ body{
     <div class="form-subtitle">Sign in to your staff account</div>
 
     <?php if(isset($error)): ?>
-    <div class="error-box">
+    <div class="error-box" id="loginAlert">
       <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error) ?>
+      <button type="button" class="close-btn" onclick="dismissAlert()" aria-label="Close">&times;</button>
     </div>
     <?php endif; ?>
 
@@ -277,14 +289,14 @@ body{
           </button>
         </div>
       </div>
-      <button type="submit" name="login" class="btn-login">
+      <button type="submit" name="login" class="btn-login" data-loading-text="Signing in...">
         <i class="fas fa-sign-in-alt" style="margin-right:6px"></i> Sign In
       </button>
     </form>
 
     <div class="form-footer">
       <a href="index.php" class="back-home"><i class="fas fa-arrow-left"></i> Back to Home</a>
-      <span class="ver-badge">v1.03</span>
+      <a href="forgot_password.php" style="font-size:0.82rem;color:#6b7280;text-decoration:none;font-weight:600;" onmouseover="this.style.color='#f4b400'" onmouseout="this.style.color='#6b7280'">Forgot password?</a>
     </div>
   </div>
 </div>
@@ -301,6 +313,15 @@ document.getElementById('pwToggle').addEventListener('click', function(){
     icon.classList.replace('fa-eye-slash','fa-eye');
   }
 });
+
+function dismissAlert(){
+  var a = document.getElementById('loginAlert');
+  if(a){ a.classList.add('hiding'); setTimeout(function(){ a.style.display='none'; }, 400); }
+}
+
+var alertEl = document.getElementById('loginAlert');
+if(alertEl){ setTimeout(dismissAlert, 6000); }
 </script>
+<script src="assets/js/forms.js"></script>
 </body>
 </html>
