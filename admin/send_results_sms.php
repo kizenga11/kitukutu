@@ -8,7 +8,7 @@ include "../includes/config.php";
 $school_name = "AMALI KITUKUTU";
 
 /* AUTH */
-if(!isset($_SESSION['teacher_id'])){
+if(!isset($_SESSION['admin_id']) && !isset($_SESSION['teacher_id'])){
     header("Location: ../login.php");
     exit();
 }

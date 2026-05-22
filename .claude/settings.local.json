@@ -16,7 +16,12 @@
       "PowerShell(New-Item *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\kitukutu\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\kitukutu\\\\admin\" -Filter \"*.php\")",
+      "Bash(Select-Object -ExpandProperty Name)"
     ]
   }
 }
