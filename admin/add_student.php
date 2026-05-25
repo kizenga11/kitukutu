@@ -480,5 +480,6 @@ document.addEventListener('DOMContentLoaded', function(){
 <?php endif; ?>
 </script>
 <script src="../assets/js/forms.js"></script>
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

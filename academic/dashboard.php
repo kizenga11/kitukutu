@@ -25,6 +25,7 @@ $unread_messages  = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FR
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <link href="../assets/css/shared.css" rel="stylesheet">
+<link href="../assets/css/loader.css" rel="stylesheet">
 </head>
 <body class="theme-academic">
 
@@ -215,5 +216,6 @@ document.addEventListener('click',function(e){if(!profileBtn.contains(e.target)&
 function loadFrame(url){document.getElementById('mainFrame').src=url;setActive(url);sessionStorage.setItem('acActivePage',url);if(window.innerWidth<992)closeSidebar();}
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

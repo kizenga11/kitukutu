@@ -803,5 +803,6 @@ function togglePassword(id){
 document.querySelectorAll('.alert-app').forEach(function(a){setTimeout(function(){a.style.display='none';},5000);});
 </script>
 <script src="../assets/js/forms.js"></script>
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

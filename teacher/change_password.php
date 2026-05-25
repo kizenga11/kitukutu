@@ -100,5 +100,6 @@ function togglePw(id, btn) {
 }
 </script>
 <script src="../assets/js/forms.js"></script>
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

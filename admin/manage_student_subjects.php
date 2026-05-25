@@ -107,6 +107,7 @@ while ($r = mysqli_fetch_assoc($subjects_voc)) $all_subjects['Vocational'][] = $
 <title>Manage Student Subjects</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="../assets/css/loader.css" rel="stylesheet">
 <style>
 :root{
   --primary:#4f46e5;--primary-light:#ede9fe;--primary-dark:#4338ca;
@@ -383,6 +384,10 @@ function openModal(studentId, studentName, stream) {
   document.getElementById('modalTitle').textContent = studentName;
   document.getElementById('modalStream').textContent = stream + ' Stream';
 
+  // Show loading placeholders
+  document.getElementById('compulsorySubjects').innerHTML = '<div style="padding:10px;text-align:center;color:var(--muted);font-size:12px;"><span class="loader-inline"></span> Loading...</div>';
+  document.getElementById('optionalSubjects').innerHTML = '';
+
   // Fetch current subjects for this student
   fetch('get_student_subjects.php?student_id=' + studentId)
     .then(r => r.json())
@@ -485,5 +490,6 @@ document.getElementById('subjectModal').addEventListener('click', function(e) {
 });
 </script>
 
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

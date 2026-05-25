@@ -455,5 +455,6 @@ document.querySelectorAll('.alert').forEach(function(a){
 });
 </script>
 <script src="../assets/js/forms.js"></script>
+<script src="../assets/js/loader.js"></script>
 </body>
 </html>

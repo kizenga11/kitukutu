@@ -323,5 +323,6 @@ var alertEl = document.getElementById('loginAlert');
 if(alertEl){ setTimeout(dismissAlert, 6000); }
 </script>
 <script src="assets/js/forms.js"></script>
+<script src="assets/js/loader.js"></script>
 </body>
 </html>
