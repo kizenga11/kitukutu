@@ -34,9 +34,12 @@ body{background:#f0f2f5;font-family:system-ui,-apple-system,sans-serif;padding:2
 .val{font-size:14px;color:#111827;margin-bottom:8px;white-space:pre-wrap;}
 .back-link{font-size:12px;color:#6366f1;text-decoration:none;font-weight:600;}
 .back-link:hover{text-decoration:underline;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title">
     <a href="manage_lesson_plans.php" target="mainFrame" class="back-link"><i class="bi bi-arrow-left"></i> Back</a>

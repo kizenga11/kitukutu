@@ -56,9 +56,12 @@ body{background:#f3f4f6;font-family:system-ui,-apple-system,sans-serif;padding:1
 .badge-draft{background:#f3f4f6;color:#6b7280;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;}
 .badge-submitted{background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;}
 .badge-approved{background:#d1fae5;color:#065f46;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title"><i class="bi bi-book"></i> Teaching & Learning Documents</div>
 

@@ -105,9 +105,12 @@ body{background:#f0f2f5;font-family:system-ui,-apple-system,sans-serif;padding:2
 .badge-submitted{background:#fef3c7;color:#92400e;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
 .badge-approved{background:#d1fae5;color:#065f46;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
 .f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title"><i class="bi bi-calendar-week"></i> Scheme of Work</div>
 

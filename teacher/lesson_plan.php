@@ -127,9 +127,12 @@ textarea.f-input{resize:vertical;min-height:60px;}
 .empty-msg{text-align:center;padding:20px;color:#9ca3af;font-size:13px;}
 .empty-msg i{font-size:1.8rem;display:block;margin-bottom:6px;opacity:.3;}
 .modal-content{border-radius:12px;border:none;box-shadow:0 8px 30px rgba(0,0,0,.12);}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title"><i class="bi bi-file-earmark-text"></i> Lesson Plans</div>
 

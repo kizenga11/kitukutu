@@ -44,9 +44,12 @@ body{background:#f0f2f5;font-family:system-ui,-apple-system,sans-serif;padding:2
 .btn-primary-sm{background:#dbeafe;color:#1d4ed8;}
 .btn-success-sm{background:#d1fae5;color:#065f46;}
 .btn-danger-sm{background:#fee2e2;color:#991b1b;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title"><i class="bi bi-file-earmark-text"></i> Lesson Plans</div>
 

@@ -94,9 +94,12 @@ body{background:#f0f2f5;font-family:system-ui,-apple-system,sans-serif;padding:2
 .badge-inactive{background:#f3f4f6;color:#6b7280;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;}
 .doc-link{text-decoration:none;font-weight:600;font-size:12px;}
 .doc-link:hover{text-decoration:underline;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title"><i class="bi bi-book"></i> Curriculum Documents</div>
 

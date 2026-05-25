@@ -76,9 +76,12 @@ textarea.f-input{resize:vertical;min-height:40px;}
 .back-link:hover{text-decoration:underline;}
 .status-bar{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
 .status-label{font-size:12px;font-weight:600;}
+.uc-banner{display:flex;align-items:center;gap:8px;background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:#92400e;}
 </style>
 </head>
 <body>
+
+<div class="uc-banner"><i class="bi bi-tools"></i> 🚧 Under Construction — This section is being updated.</div>
 
 <div class="page-title">
     <a href="teaching_docs.php" target="mainFrame" class="back-link"><i class="bi bi-arrow-left"></i> Back</a>
