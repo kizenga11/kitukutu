@@ -18,6 +18,10 @@ $stats = [
   'vocational' => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE stream='Vocational'"))['c'] ?? 0,
 ];
 
+$form_counts = [];
+$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students GROUP BY form_level ORDER BY form_level");
+if ($fc_q) while ($fc_r = mysqli_fetch_assoc($fc_q)) $form_counts[$fc_r['form_level']] = $fc_r['total'];
+
 $tp = mysqli_fetch_assoc(mysqli_query($conn,"
   SELECT COUNT(t.id) total, SUM(t.teaching_status='Taught') taught
   FROM subject_settings ss JOIN topics t ON t.subject_setting_id=ss.id
@@ -92,8 +96,25 @@ body{background:var(--bg);font-family:system-ui,sans-serif;padding:14px;color:#1
   </div>
   <div class="stat-card">
     <div class="stat-val"><?=$stats['exams']?></div>
-    <div class="stat-lbl">Mitihani Hai</div>
+    <div class="stat-lbl">Mitihani</div>
   </div>
+</div>
+
+<?php if (!empty($form_counts)): ?>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+  <?php
+  $form_colors = ['Form One'=>'#3b82f6','Form Two'=>'#10b981','Form Three'=>'#f59e0b','Form Four'=>'#ef4444'];
+  foreach ($form_counts as $fl => $cnt):
+    $color = $form_colors[$fl] ?? '#6b7280';
+  ?>
+  <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #dbeafe;border-radius:10px;padding:5px 10px;">
+    <span style="width:10px;height:10px;border-radius:50%;background:<?= $color ?>;flex-shrink:0;"></span>
+    <span style="font-weight:700;font-size:14px;"><?= (int)$cnt ?></span>
+    <span style="font-size:11px;color:#6b7280;"><?= str_replace('Form ','F. ',$fl) ?></span>
+  </div>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
 </div>
 
 <div class="row g-3">

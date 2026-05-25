@@ -47,484 +47,8 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="../assets/css/shared.css" rel="stylesheet">
 
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    background: #f4f7fc;
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-    overflow-x: hidden;
-}
-
-/* SIDEBAR - mobile first */
-.sidebar {
-    position: fixed;
-    top: 0;
-    left: -280px;
-    width: 280px;
-    height: 100%;
-    background: linear-gradient(180deg, #0b2b3f 0%, #071a24 100%);
-    z-index: 1050;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 1.2rem 0.8rem;
-    overflow-y: auto;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
-}
-
-.sidebar.active {
-    left: 0;
-}
-
-.sidebar-header {
-    padding-bottom: 1.2rem;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 1.2rem;
-}
-
-.sidebar-header h4 {
-    color: white;
-    font-weight: 700;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.sidebar-header small {
-    color: #a0c4e0;
-    font-size: 0.7rem;
-    display: block;
-    margin-top: 5px;
-}
-
-.sidebar-nav {
-    list-style: none;
-    padding: 0;
-}
-
-.sidebar-nav li {
-    margin-bottom: 6px;
-}
-
-.sidebar-nav a {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
-    color: #cbdbe0;
-    text-decoration: none;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.sidebar-nav a i {
-    font-size: 1.2rem;
-    width: 24px;
-}
-
-.sidebar-nav a:hover {
-    background: rgba(244, 180, 0, 0.12);
-    color: white;
-    transform: translateX(4px);
-}
-
-.sidebar-nav a.active {
-    background: #f4b400;
-    color: #0b2b3f;
-    font-weight: 600;
-}
-
-.badge-msg {
-    background: #f4b400;
-    color: #0b2b3f;
-    border-radius: 30px;
-    padding: 2px 8px;
-    font-size: 0.7rem;
-    font-weight: bold;
-    margin-left: auto;
-}
-
-/* overlay for mobile */
-.overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 1040;
-    display: none;
-}
-
-.overlay.active {
-    display: block;
-}
-
-/* main content */
-.main-content {
-    margin-left: 0;
-    padding: 0.8rem;
-    transition: all 0.3s;
-}
-
-.content-frame {
-    width: 100%;
-    border: 0;
-    border-radius: 20px;
-    background: white;
-    min-height: calc(100vh - 110px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-}
-
-/* topbar */
-.topbar {
-    background: white;
-    border-radius: 20px;
-    padding: 0.6rem 1rem;
-    margin-bottom: 1.2rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-    border: 1px solid #e2edf2;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.menu-toggle {
-    background: #f4b400;
-    border: none;
-    padding: 8px 12px;
-    border-radius: 12px;
-    color: #0b2b3f;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.year-badge {
-    background: #eef3fa;
-    padding: 5px 12px;
-    border-radius: 40px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-/* stat cards */
-.stats-wrapper {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 12px;
-    margin-bottom: 1.5rem;
-}
-
-.stat-item {
-    background: white;
-    border-radius: 20px;
-    padding: 1rem 0.5rem;
-    text-align: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
-    border: 1px solid #e6edf2;
-    transition: all 0.2s;
-}
-
-.stat-number {
-    font-size: 1.7rem;
-    font-weight: 800;
-    color: #0b2b3f;
-    line-height: 1.2;
-}
-
-.stat-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    color: #6b8a9e;
-    letter-spacing: 0.3px;
-}
-
-/* cards */
-.custom-card {
-    background: white;
-    border-radius: 24px;
-    border: 1px solid #e6edf2;
-    margin-bottom: 1.2rem;
-    overflow: hidden;
-}
-
-.card-title {
-    padding: 1rem 1rem 0.2rem 1rem;
-    font-weight: 700;
-    font-size: 1rem;
-    border-bottom: 2px solid #f4b40040;
-    margin-bottom: 0;
-}
-
-.table-responsive-custom {
-    overflow-x: auto;
-}
-
-.table-custom {
-    width: 100%;
-    font-size: 0.8rem;
-}
-
-.table-custom th {
-    padding: 0.8rem 0.8rem 0.5rem;
-    font-weight: 600;
-    color: #5c7c94;
-    border-bottom: 1px solid #edf2f7;
-}
-
-.table-custom td {
-    padding: 0.6rem 0.8rem;
-    border-bottom: 1px solid #f0f5fa;
-}
-
-.status-pending {
-    background: #fff3e0;
-    color: #e67e22;
-    padding: 2px 10px;
-    border-radius: 30px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    display: inline-block;
-}
-
-.status-approved {
-    background: #e8f5e9;
-    color: #2e7d32;
-    padding: 2px 10px;
-    border-radius: 30px;
-    font-size: 0.7rem;
-    font-weight: 600;
-}
-
-/* desktop view */
-@media (min-width: 992px) {
-    .sidebar {
-        left: 0;
-        width: 260px;
-    }
-    
-    .main-content {
-        margin-left: 260px;
-        padding: 1rem 1.5rem;
-    }
-    
-    .menu-toggle {
-        display: none;
-    }
-    
-    .overlay {
-        display: none !important;
-    }
-    
-    .stats-wrapper {
-        gap: 1rem;
-    }
-    
-    .stat-number {
-        font-size: 2rem;
-    }
-}
-
-@media (max-width: 576px) {
-    .stats-wrapper {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
-    }
-    
-    .stat-number {
-        font-size: 1.4rem;
-    }
-    
-    .topbar {
-        flex-direction: row;
-    }
-}
-
-/* ── Welcome section ── */
-.top-welcome{flex:1;min-width:0;padding:0 6px;}
-.top-welcome .greeting{font-size:11px;color:#6b8a9e;}
-.top-welcome .wname{font-size:14px;font-weight:800;color:#0b2b3f;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.top-welcome .wdate{font-size:11px;color:#6b8a9e;margin-top:1px;}
-@media(max-width:480px){.top-welcome .wdate{display:none;}}
-
-/* ── Topbar right-side actions ── */
-.topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Notification bell */
-.notif-btn {
-    position: relative;
-    background: #f4f7fc;
-    border: 1px solid #e2edf2;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #0b2b3f;
-    font-size: 17px;
-    transition: background .15s;
-    text-decoration: none;
-}
-.notif-btn:hover { background: #e9f0f7; color: #0b2b3f; }
-.notif-badge {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background: #ef4444;
-    color: #fff;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 10px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #fff;
-}
-
-/* Profile dropdown */
-.profile-wrap {
-    position: relative;
-}
-.profile-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #f4f7fc;
-    border: 1px solid #e2edf2;
-    border-radius: 40px;
-    padding: 4px 10px 4px 4px;
-    cursor: pointer;
-    transition: background .15s;
-}
-.profile-btn:hover { background: #e9f0f7; }
-.avatar {
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #0b2b3f, #1a5276);
-    color: #fff;
-    font-weight: 700;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.profile-btn .name-text {
-    font-size: 12px;
-    font-weight: 600;
-    color: #1a1a2e;
-    max-width: 110px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-.profile-btn .chevron {
-    font-size: 10px;
-    color: #6b7280;
-    transition: transform .2s;
-}
-.profile-btn.open .chevron { transform: rotate(180deg); }
-.profile-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    background: #fff;
-    border: 1px solid #e2edf2;
-    border-radius: 14px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    min-width: 200px;
-    z-index: 2000;
-    overflow: hidden;
-}
-.profile-dropdown.open { display: block; }
-.pd-header {
-    padding: 12px 14px 10px;
-    border-bottom: 1px solid #f0f5fa;
-    font-size: 12px;
-    color: #6b7280;
-}
-.pd-header .pd-name {
-    font-weight: 700;
-    font-size: 13px;
-    color: #111827;
-    margin-bottom: 2px;
-}
-.profile-dropdown a {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
-    font-size: 13px;
-    color: #111827;
-    text-decoration: none;
-    transition: background .12s;
-}
-.profile-dropdown a:hover { background: #f4f7fc; }
-.profile-dropdown a i { font-size: 16px; width: 20px; }
-.pd-logout { color: #ef4444 !important; border-top: 1px solid #f0f5fa; }
-.pd-logout i { color: #ef4444; }
-
-/* ── Grouped nav ── */
-.nav-single { margin-bottom: 3px; }
-.nav-single > a {
-    display: flex; align-items: center; gap: 12px;
-    padding: 10px 12px; border-radius: 12px;
-    color: #cbdbe0; text-decoration: none;
-    font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
-}
-.nav-single > a i { font-size: 1.15rem; width: 22px; flex-shrink: 0; }
-.nav-single > a:hover { background: rgba(244,180,0,0.12); color: #fff; transform: translateX(3px); }
-.nav-single > a.active { background: #f4b400; color: #0b2b3f; font-weight: 600; transform: none; }
-
-.nav-group { margin-bottom: 3px; }
-.nav-grp-hdr {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 12px; border-radius: 10px;
-    color: #7aa3bc; font-size: 0.72rem; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 0.6px;
-    cursor: pointer; user-select: none; transition: all 0.2s;
-}
-.nav-grp-hdr:hover { background: rgba(255,255,255,0.06); color: #cce3f0; }
-.nav-grp-hdr.open { color: #f4b400; }
-.nav-grp-hdr .gleft { display: flex; align-items: center; gap: 9px; }
-.nav-grp-hdr .gleft i { font-size: 1rem; }
-.nav-grp-hdr .gchev { font-size: 10px; transition: transform 0.2s; flex-shrink: 0; }
-.nav-grp-hdr.open .gchev { transform: rotate(180deg); }
-
-.nav-sub { display: none; padding-left: 8px; margin-top: 2px; }
-.nav-sub.open { display: block; }
-.nav-sub li { margin-bottom: 1px; list-style: none; }
-.nav-sub a {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 12px; border-radius: 9px;
-    color: #9bbfd4; text-decoration: none;
-    font-size: 0.875rem; font-weight: 500; transition: all 0.18s;
-}
-.nav-sub a i { font-size: 1rem; width: 20px; flex-shrink: 0; }
-.nav-sub a:hover { background: rgba(244,180,0,0.12); color: #fff; transform: translateX(3px); }
-.nav-sub a.active { background: #f4b400; color: #0b2b3f; font-weight: 600; transform: none; }
-</style>
 </head>
 <body>
 
@@ -582,6 +106,35 @@ body {
             <ul class="nav-sub">
                 <li><a href="manage_periods.php" target="mainFrame"><i class="bi bi-calendar-week"></i> Periods</a></li>
                 <li><a href="teaching_progress_overview.php" target="mainFrame"><i class="bi bi-graph-up-arrow"></i> Teaching Progress</a></li>
+            </ul>
+        </li>
+
+        <!-- Teaching Docs -->
+        <li class="nav-group">
+            <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+                <span class="gleft"><i class="bi bi-book-fill"></i> Teaching Docs</span>
+                <i class="bi bi-chevron-down gchev"></i>
+            </div>
+            <ul class="nav-sub">
+                <li><a href="manage_curriculum.php" target="mainFrame"><i class="bi bi-book"></i> Curriculum</a></li>
+                <li><a href="manage_syllabus.php" target="mainFrame"><i class="bi bi-journal-text"></i> Syllabus</a></li>
+                <li><a href="manage_schemes.php" target="mainFrame"><i class="bi bi-calendar-week"></i> Scheme of Work</a></li>
+                <li><a href="manage_lesson_plans.php" target="mainFrame"><i class="bi bi-file-earmark-text"></i> Lesson Plans</a></li>
+                <li><a href="manage_subject_resources.php" target="mainFrame"><i class="bi bi-journal-richtext"></i> Books & Notes</a></li>
+            </ul>
+        </li>
+
+        <!-- Calendar -->
+        <li class="nav-group">
+            <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+                <span class="gleft"><i class="bi bi-calendar3"></i> Calendar</span>
+                <i class="bi bi-chevron-down gchev"></i>
+            </div>
+            <ul class="nav-sub">
+                <li><a href="academic_years.php" target="mainFrame"><i class="bi bi-calendar-range"></i> Academic Years</a></li>
+                <li><a href="academic_terms.php" target="mainFrame"><i class="bi bi-layers"></i> Terms</a></li>
+                <li><a href="manage_events.php" target="mainFrame"><i class="bi bi-calendar-event"></i> Events</a></li>
+                <li><a href="academic_calendar.php" target="mainFrame"><i class="bi bi-calendar3"></i> Calendar View</a></li>
             </ul>
         </li>
 
@@ -655,6 +208,7 @@ body {
         </div>
     </div>
 
+    <div class="breadcrumb-bar" id="breadcrumbBar"></div>
     <iframe
         title="Admin Content"
         class="content-frame"
@@ -707,6 +261,20 @@ function openGroupForLink(link) {
 /* ── Link activation ── */
 const allLinks = document.querySelectorAll('.sidebar-nav a[target="mainFrame"]');
 
+function updateBreadcrumb(href) {
+    var bar = document.getElementById('breadcrumbBar');
+    if (!bar) return;
+    var link = Array.from(allLinks).find(l => l.getAttribute('href') === href);
+    if (!link) { bar.innerHTML = ''; return; }
+    var pageText = link.textContent.trim().replace(/\s+/g, ' ');
+    var sub = link.closest('.nav-sub');
+    var group = sub ? sub.previousElementSibling.querySelector('.gleft') : null;
+    var groupText = group ? group.textContent.trim() : 'Admin';
+    bar.innerHTML = '<span>' + groupText + '</span>'
+      + '<span class="bc-sep">›</span>'
+      + '<span class="bc-page">' + pageText + '</span>';
+}
+
 function setActive(href) {
     allLinks.forEach(l => l.classList.remove('active'));
     allLinks.forEach(l => {
@@ -715,6 +283,7 @@ function setActive(href) {
             openGroupForLink(l);
         }
     });
+    updateBreadcrumb(href);
 }
 
 allLinks.forEach(link => {

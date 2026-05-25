@@ -1,0 +1,864 @@
+/* ================================================================
+   shared.css — Kitukutu School Management System
+   Dashboard shell styles shared across all roles.
+   Theme colours are set via CSS custom properties; each role
+   overrides them with a body class (theme-teacher, etc.).
+   ================================================================ */
+
+
+/* ── 1. THEME TOKENS ─────────────────────────────────────────── */
+
+/* Default / Admin: navy + gold */
+:root {
+  --sidebar-from:   #0b2b3f;
+  --sidebar-to:     #071a24;
+  --sidebar-w:      280px;
+  --accent:         #f4b400;
+  --accent-fg:      #0b2b3f;
+  --nav-link:       #cbdbe0;
+  --nav-sub-link:   #9bbfd4;
+  --nav-hover:      rgba(244, 180, 0, .12);
+  --nav-grp-label:  #7aa3bc;
+  --nav-grp-open:   #f4b400;
+  --topbar-border:  #e2edf2;
+  --notif-bg:       #f4f7fc;
+  --notif-border:   #e2edf2;
+  --notif-color:    #0b2b3f;
+  --notif-hover:    #e9f0f7;
+  --profile-bg:     #f4f7fc;
+  --profile-border: #e2edf2;
+  --profile-hover:  #e9f0f7;
+  --pd-border:      #e2edf2;
+  --pd-hover:       #f4f7fc;
+  --pd-sep:         #f0f5fa;
+  --avatar-from:    #0b2b3f;
+  --avatar-to:      #1a5276;
+  --welcome-name:   #0b2b3f;
+  --menu-bg:        #f4b400;
+  --menu-fg:        #0b2b3f;
+  --body-bg:        #f4f7fc;
+}
+
+/* Teacher: dark navy + indigo */
+body.theme-teacher {
+  --sidebar-from:   #0f2744;
+  --sidebar-to:     #091829;
+  --accent:         rgba(255, 255, 255, .15);
+  --accent-fg:      #ffffff;
+  --nav-link:       #cbd5e1;
+  --nav-sub-link:   #94a3b8;
+  --nav-hover:      rgba(255, 255, 255, .1);
+  --nav-grp-label:  #93aec8;
+  --nav-grp-open:   #ffffff;
+  --topbar-border:  #e5e7eb;
+  --notif-bg:       #f3f4f6;
+  --notif-border:   #e5e7eb;
+  --notif-color:    #111827;
+  --notif-hover:    #e5e7eb;
+  --profile-bg:     #f3f4f6;
+  --profile-border: #e5e7eb;
+  --profile-hover:  #e5e7eb;
+  --pd-border:      #e5e7eb;
+  --pd-hover:       #f3f4f6;
+  --pd-sep:         #f3f4f6;
+  --avatar-from:    #6366f1;
+  --avatar-to:      #4338ca;
+  --welcome-name:   #0f2744;
+  --menu-bg:        #ffffff;
+  --menu-fg:        #374151;
+  --body-bg:        #f3f4f6;
+}
+
+/* Headmaster: dark green + emerald */
+body.theme-headmaster {
+  --sidebar-from:   #064e3b;
+  --sidebar-to:     #022c22;
+  --accent:         #10b981;
+  --accent-fg:      #ffffff;
+  --nav-link:       #d1fae5;
+  --nav-sub-link:   #a7f3d0;
+  --nav-hover:      rgba(16, 185, 129, .15);
+  --nav-grp-label:  #6ee7b7;
+  --nav-grp-open:   #34d399;
+  --topbar-border:  #d1fae5;
+  --notif-bg:       #f0fdf4;
+  --notif-border:   #bbf7d0;
+  --notif-color:    #064e3b;
+  --notif-hover:    #dcfce7;
+  --profile-bg:     #f0fdf4;
+  --profile-border: #bbf7d0;
+  --profile-hover:  #dcfce7;
+  --pd-border:      #d1fae5;
+  --pd-hover:       #f0fdf4;
+  --pd-sep:         #f0fdf4;
+  --avatar-from:    #10b981;
+  --avatar-to:      #059669;
+  --welcome-name:   #064e3b;
+  --menu-bg:        #10b981;
+  --menu-fg:        #ffffff;
+  --body-bg:        #f4f7fc;
+}
+
+/* Academic officer: dark blue + blue */
+body.theme-academic {
+  --sidebar-from:   #1e3a5f;
+  --sidebar-to:     #0d2137;
+  --accent:         #3b82f6;
+  --accent-fg:      #ffffff;
+  --nav-link:       #bfdbfe;
+  --nav-sub-link:   #93c5fd;
+  --nav-hover:      rgba(59, 130, 246, .15);
+  --nav-grp-label:  #93c5fd;
+  --nav-grp-open:   #60a5fa;
+  --topbar-border:  #dbeafe;
+  --notif-bg:       #eff6ff;
+  --notif-border:   #bfdbfe;
+  --notif-color:    #1e3a5f;
+  --notif-hover:    #dbeafe;
+  --profile-bg:     #eff6ff;
+  --profile-border: #bfdbfe;
+  --profile-hover:  #dbeafe;
+  --pd-border:      #dbeafe;
+  --pd-hover:       #eff6ff;
+  --pd-sep:         #eff6ff;
+  --avatar-from:    #3b82f6;
+  --avatar-to:      #1d4ed8;
+  --welcome-name:   #1e3a5f;
+  --menu-bg:        #3b82f6;
+  --menu-fg:        #ffffff;
+  --body-bg:        #f4f7fc;
+}
+
+
+/* ── 2. RESET & BASE ─────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--body-bg);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  overflow-x: hidden;
+}
+
+
+/* ── 3. LAYOUT ───────────────────────────────────────────────── */
+/* Teacher wraps sidebar + main in a .layout flex container */
+.layout {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+
+/* ── 4. SIDEBAR ──────────────────────────────────────────────── */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: calc(var(--sidebar-w) * -1);
+  width: var(--sidebar-w);
+  height: 100%;
+  background: linear-gradient(180deg, var(--sidebar-from) 0%, var(--sidebar-to) 100%);
+  z-index: 1050;
+  transition: left .3s cubic-bezier(.4, 0, .2, 1);
+  padding: 1.2rem .8rem;
+  overflow-y: auto;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, .15);
+}
+
+/* Teacher uses transform (its sidebar starts at left:0 but translated) */
+body.theme-teacher .sidebar {
+  left: 0;
+  transform: translateX(-100%);
+  transition: transform .2s ease;
+}
+
+.sidebar.active {
+  left: 0;
+}
+
+body.theme-teacher .sidebar.active {
+  transform: translateX(0);
+}
+
+/* Sidebar header */
+.sidebar-header {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, .1);
+  margin-bottom: 1rem;
+}
+
+.sidebar-header h4 {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-header small {
+  color: var(--nav-grp-label);
+  font-size: .7rem;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Role chip shown under the sidebar title */
+.role-chip {
+  display: inline-block;
+  background: rgba(255, 255, 255, .12);
+  color: var(--nav-link);
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: .68rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Teacher sidebar brand/sub helpers */
+.sidebar .brand {
+  font-weight: 800;
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: .3px;
+}
+
+.sidebar .sub {
+  color: var(--nav-grp-label);
+  font-size: 12px;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 0;
+}
+
+
+/* ── 5. NAVIGATION ───────────────────────────────────────────── */
+
+/* Simple Bootstrap nav links (teacher sidebar) */
+.sidebar .nav a {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border-radius: 10px;
+  color: var(--nav-link);
+  text-decoration: none;
+  justify-content: space-between;
+  font-size: .9rem;
+  font-weight: 500;
+  transition: all .2s;
+}
+
+.sidebar .nav a:hover {
+  background: var(--nav-hover);
+  color: #fff;
+}
+
+.sidebar .nav a.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+}
+
+/* Grouped nav — single top-level items */
+.nav-single {
+  margin-bottom: 3px;
+}
+
+.nav-single > a,
+.nav-single > a:visited {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--nav-link);
+  text-decoration: none;
+  font-size: .88rem;
+  font-weight: 500;
+  transition: all .2s;
+}
+
+.nav-single > a i {
+  font-size: 1.1rem;
+  width: 22px;
+  flex-shrink: 0;
+}
+
+.nav-single > a:hover {
+  background: var(--nav-hover);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.nav-single > a.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 700;
+  transform: none;
+}
+
+/* Grouped nav — collapsible groups */
+.nav-group {
+  margin-bottom: 3px;
+}
+
+.nav-grp-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 10px;
+  color: var(--nav-grp-label);
+  font-size: .7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  cursor: pointer;
+  user-select: none;
+  transition: all .2s;
+}
+
+.nav-grp-hdr:hover {
+  background: rgba(255, 255, 255, .06);
+  color: var(--nav-link);
+}
+
+.nav-grp-hdr.open {
+  color: var(--nav-grp-open);
+}
+
+.nav-grp-hdr .gleft {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.nav-grp-hdr .gleft i { font-size: 1rem; }
+
+.nav-grp-hdr .gchev {
+  font-size: 10px;
+  transition: transform .2s;
+  flex-shrink: 0;
+}
+
+.nav-grp-hdr.open .gchev {
+  transform: rotate(180deg);
+}
+
+/* Grouped nav — sub items */
+.nav-sub {
+  display: none;
+  padding-left: 8px;
+  margin-top: 2px;
+}
+
+.nav-sub.open { display: block; }
+
+.nav-sub li {
+  margin-bottom: 1px;
+  list-style: none;
+}
+
+.nav-sub a,
+.nav-sub a:visited {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  color: var(--nav-sub-link);
+  text-decoration: none;
+  font-size: .875rem;
+  font-weight: 500;
+  transition: all .18s;
+}
+
+.nav-sub a i {
+  font-size: 1rem;
+  width: 20px;
+  flex-shrink: 0;
+}
+
+.nav-sub a:hover {
+  background: var(--nav-hover);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.nav-sub a.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-weight: 600;
+  transform: none;
+}
+
+/* Unread count badge inside nav links */
+.badge-msg {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-radius: 30px;
+  padding: 2px 8px;
+  font-size: .7rem;
+  font-weight: 700;
+  margin-left: auto;
+}
+
+
+/* ── 6. MOBILE OVERLAY ───────────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .5);
+  z-index: 1040;
+  display: none;
+}
+
+.overlay.active { display: block; }
+
+
+/* ── 7. MAIN CONTENT ─────────────────────────────────────────── */
+/* .main-content = admin/headmaster/academic  |  .main = teacher */
+.main-content,
+.main {
+  margin-left: 0;
+  padding: .8rem;
+  transition: margin .3s;
+  flex: 1;
+  min-width: 0;
+}
+
+
+/* ── 8. TOPBAR ───────────────────────────────────────────────── */
+/* .topbar = admin/headmaster/academic  |  .top = teacher */
+.topbar,
+.top {
+  background: #fff;
+  border-radius: 18px;
+  padding: .6rem 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .04);
+  border: 1px solid var(--topbar-border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+
+/* ── 9. MENU TOGGLE ──────────────────────────────────────────── */
+/* .menu-toggle = admin/headmaster/academic  |  .menu-btn = teacher */
+.menu-toggle,
+.menu-btn {
+  background: var(--menu-bg);
+  border: none;
+  padding: 7px 12px;
+  border-radius: 10px;
+  color: var(--menu-fg);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: .875rem;
+}
+
+
+/* ── 10. WELCOME STRIP ───────────────────────────────────────── */
+.top-welcome {
+  flex: 1;
+  min-width: 0;
+  padding: 0 6px;
+}
+
+.top-welcome .greeting {
+  font-size: 11px;
+  color: #6b7280;
+}
+
+.top-welcome .wname {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--welcome-name);
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-welcome .wdate {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 1px;
+}
+
+
+/* ── 11. TOPBAR ACTIONS ──────────────────────────────────────── */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Notification bell */
+.notif-btn {
+  position: relative;
+  background: var(--notif-bg);
+  border: 1px solid var(--notif-border);
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--notif-color);
+  font-size: 17px;
+  text-decoration: none;
+  transition: background .15s;
+}
+
+.notif-btn:hover {
+  background: var(--notif-hover);
+  color: var(--notif-color);
+}
+
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+}
+
+/* Profile widget */
+.profile-wrap {
+  position: relative;
+}
+
+.profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--profile-bg);
+  border: 1px solid var(--profile-border);
+  border-radius: 40px;
+  padding: 3px 10px 3px 3px;
+  cursor: pointer;
+  transition: background .15s;
+}
+
+.profile-btn:hover {
+  background: var(--profile-hover);
+}
+
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--avatar-from), var(--avatar-to));
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.name-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111827;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  font-size: 10px;
+  color: #6b7280;
+  transition: transform .2s;
+}
+
+.profile-btn.open .chevron {
+  transform: rotate(180deg);
+}
+
+/* Profile dropdown */
+.profile-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--pd-border);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .12);
+  min-width: 200px;
+  z-index: 2000;
+  overflow: hidden;
+}
+
+.profile-dropdown.open { display: block; }
+
+.pd-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--pd-sep);
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.pd-header .pd-name {
+  font-weight: 700;
+  font-size: 13px;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+.profile-dropdown a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #111827;
+  text-decoration: none;
+  transition: background .12s;
+}
+
+.profile-dropdown a:hover { background: var(--pd-hover); }
+.profile-dropdown a i { font-size: 16px; width: 20px; }
+
+.pd-logout {
+  color: #ef4444 !important;
+  border-top: 1px solid var(--pd-sep);
+}
+
+.pd-logout i { color: #ef4444; }
+
+
+/* ── 11b. BREADCRUMB BAR ─────────────────────────────────────── */
+.breadcrumb-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px 0;
+  font-size: 11px;
+  color: #8aa4b8;
+  min-height: 22px;
+  flex-wrap: wrap;
+}
+.breadcrumb-bar .bc-sep {
+  opacity: .5;
+  font-size: 10px;
+}
+.breadcrumb-bar .bc-page {
+  color: var(--sidebar-from);
+  font-weight: 600;
+}
+
+
+/* ── 12. CONTENT FRAME ───────────────────────────────────────── */
+/* .content-frame = admin/headmaster/academic  |  .frame = teacher */
+.content-frame,
+.frame {
+  width: 100%;
+  border: 0;
+  border-radius: 16px;
+  background: #fff;
+  min-height: calc(100vh - 132px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .03);
+  display: block;
+  margin-top: 0;
+}
+
+
+/* ── 13. STAT CARDS ──────────────────────────────────────────── */
+.stats-wrapper {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.stat-item {
+  background: #fff;
+  border-radius: 20px;
+  padding: 1rem .5rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .02);
+  border: 1px solid #e6edf2;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.stat-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .06);
+}
+
+.stat-number {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--sidebar-from);
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: .7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #6b8a9e;
+  letter-spacing: .3px;
+}
+
+
+/* ── 14. CONTENT CARDS + TABLES ─────────────────────────────── */
+.custom-card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #e6edf2;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+}
+
+.card-title {
+  padding: 1rem 1rem .4rem;
+  font-weight: 700;
+  font-size: 1rem;
+  border-bottom: 2px solid rgba(244, 180, 0, .2);
+  margin-bottom: 0;
+}
+
+.table-responsive-custom {
+  overflow-x: auto;
+}
+
+.table-custom {
+  width: 100%;
+  font-size: .8rem;
+  border-collapse: collapse;
+}
+
+.table-custom th {
+  padding: .8rem .8rem .5rem;
+  font-weight: 600;
+  color: #5c7c94;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.table-custom td {
+  padding: .6rem .8rem;
+  border-bottom: 1px solid #f0f5fa;
+}
+
+
+/* ── 15. STATUS BADGES ───────────────────────────────────────── */
+.status-pending {
+  background: #fff3e0;
+  color: #e67e22;
+  padding: 2px 10px;
+  border-radius: 30px;
+  font-size: .7rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-approved {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 2px 10px;
+  border-radius: 30px;
+  font-size: .7rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-rejected {
+  background: #ffebee;
+  color: #c62828;
+  padding: 2px 10px;
+  border-radius: 30px;
+  font-size: .7rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+
+/* ── 16. YEAR BADGE ──────────────────────────────────────────── */
+.year-badge {
+  background: #eef3fa;
+  padding: 5px 12px;
+  border-radius: 40px;
+  font-size: .75rem;
+  font-weight: 600;
+  color: #4a6580;
+}
+
+
+/* ── 17. RESPONSIVE ──────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .top-welcome .wdate { display: none; }
+}
+
+@media (max-width: 576px) {
+  .stats-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-number { font-size: 1.4rem; }
+}
+
+@media (min-width: 992px) {
+  /* Sidebar: always visible on desktop */
+  .sidebar {
+    left: 0;
+  }
+
+  /* Teacher: sidebar becomes sticky so it flows inside .layout flex */
+  body.theme-teacher .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    transform: none;
+  }
+
+  /* Push main content past the fixed sidebar */
+  .main-content {
+    margin-left: var(--sidebar-w);
+    padding: 1rem 1.5rem;
+  }
+
+  /* Teacher .main sits beside sticky sidebar — no extra margin needed */
+  body.theme-teacher .main {
+    margin-left: 0;
+    padding: 12px;
+  }
+
+  /* Hide mobile-only controls */
+  .menu-toggle,
+  .menu-btn { display: none; }
+
+  .overlay { display: none !important; }
+
+  /* Larger stats on wide screens */
+  .stats-wrapper { gap: 1rem; }
+  .stat-number { font-size: 2rem; }
+}

@@ -16,7 +16,7 @@ $active_exams = [];
 while ($e = mysqli_fetch_assoc($active_exams_q)) {
     // Get teacher's subjects for this exam (intersection of teacher_assignments & exam_subjects)
     $subs_q = mysqli_query($conn, "
-        SELECT s.id AS subject_id, s.subject_name, s.stream, ta.class_stream,
+        SELECT DISTINCT s.id AS subject_id, s.subject_name, s.stream, ta.class_stream,
                (SELECT COUNT(*) FROM marks m WHERE m.subject_id=s.id AND m.exam_id={$e['id']}) AS entered_count,
                (SELECT COUNT(*) FROM student_subjects ss2 WHERE ss2.subject_id=s.id) AS total_students
         FROM teacher_assignments ta
@@ -207,29 +207,46 @@ body { background: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; p
 
     <div class="subj-grid">
         <?php foreach ($exam['subjects'] as $sub):
-            $entered = intval($sub['entered_count']);
-            $total   = intval($sub['total_students']);
-            $pct     = $total > 0 ? round($entered / $total * 100) : 0;
-            $done    = ($pct >= 100);
             $stream_cls = strtoupper($sub['stream']) === 'VOCATIONAL' ? 'stream-voc' : 'stream-gen';
+            // Get form levels for this exam that match teacher's assignment
+            $fl_q = mysqli_query($conn, "
+                SELECT DISTINCT efl.form_level
+                FROM exam_form_levels efl
+                JOIN teacher_assignments ta ON ta.subject_id='{$sub['subject_id']}' AND ta.form_level=efl.form_level AND ta.teacher_id=$teacher_id
+                WHERE efl.exam_id='{$exam['id']}'
+            ");
+            $form_levels = [];
+            if ($fl_q) while ($fl_r = mysqli_fetch_assoc($fl_q)) $form_levels[] = $fl_r['form_level'];
+            if (empty($form_levels)) $form_levels[] = 'Form One';
         ?>
-        <a href="enter_marks.php?exam_id=<?= $exam['id'] ?>&subject_id=<?= $sub['subject_id'] ?>" class="subj-card">
+        <div class="subj-card" style="cursor:default;">
             <div class="subj-name"><?= htmlspecialchars($sub['subject_name']) ?></div>
             <span class="subj-stream <?= $stream_cls ?>"><?= ucfirst(strtolower($sub['stream'])) ?></span>
             <?php if ($sub['class_stream']): ?>
             <span style="font-size:10px;color:#6b7280;margin-left:2px">Class <?= htmlspecialchars($sub['class_stream']) ?></span>
             <?php endif; ?>
-            <div class="subj-prog">
-                <div class="prog-bar">
-                    <div class="prog-fill" style="width:<?= $pct ?>%;<?= $done ? 'background:#10b981' : '' ?>"></div>
-                </div>
-                <div class="prog-label"><?= $entered ?>/<?= $total ?> students &bull; <?= $pct ?>%</div>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;">
+                <?php foreach ($form_levels as $fl):
+                    $fl_short = str_replace('Form ', 'F. ', $fl);
+                    // Count students & entered for this form + subject
+                    $cnt_q = mysqli_query($conn, "SELECT COUNT(*) as c FROM student_subjects ss JOIN students s ON s.id=ss.student_id WHERE ss.subject_id='{$sub['subject_id']}' AND s.form_level='$fl'");
+                    $cnt_r = mysqli_fetch_assoc($cnt_q);
+                    $t = intval($cnt_r['c']);
+                    $e_q = mysqli_query($conn, "SELECT COUNT(*) as c FROM marks m WHERE m.subject_id='{$sub['subject_id']}' AND m.exam_id='{$exam['id']}' AND COALESCE(m.form_level,'$fl')='$fl'");
+                    $e_r = mysqli_fetch_assoc($e_q);
+                    $en = intval($e_r['c']);
+                    $fl_pct = $t > 0 ? round($en / $t * 100) : 0;
+                    $fl_done = ($fl_pct >= 100);
+                ?>
+                <a href="enter_marks.php?exam_id=<?= $exam['id'] ?>&subject_id=<?= $sub['subject_id'] ?>&form_level=<?= urlencode($fl) ?>"
+                   style="display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:6px;text-decoration:none;font-size:11px;background:<?= $fl_done ? '#d1fae5' : '#f3f4f6' ?>;color:<?= $fl_done ? '#065f46' : '#374151' ?>;border:1px solid <?= $fl_done ? '#a7f3d0' : '#e5e7eb' ?>;transition:all .1s;">
+                    <span style="font-weight:700;flex-shrink:0;"><?= $fl_short ?></span>
+                    <span style="flex:1;text-align:right;font-size:10px;"><?= $en ?>/<?= $t ?></span>
+                    <i class="bi bi-<?= $fl_done ? 'check-circle-fill' : 'pencil' ?>" style="font-size:12px;"></i>
+                </a>
+                <?php endforeach; ?>
             </div>
-            <div class="enter-btn <?= $done ? 'done-btn' : '' ?>">
-                <i class="bi bi-<?= $done ? 'check-circle' : 'pencil' ?>"></i>
-                <?= $done ? 'Update Marks' : 'Enter Marks' ?>
-            </div>
-        </a>
+        </div>
         <?php endforeach; ?>
     </div>
 </div>

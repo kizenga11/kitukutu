@@ -26,11 +26,13 @@ if (isset($_POST['save_marks'])) {
         $sid  = intval($sid);
         $mark = intval($mark);
         if ($mark >= 0 && $mark <= 100) {
-            $chk = mysqli_query($conn, "SELECT id FROM marks WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$test_id'");
+            $form_map = ['Form 1'=>'Form One','Form 2'=>'Form Two','Form 3'=>'Form Three','Form 4'=>'Form Four'];
+        $fl = $form_map[$test['class_name']] ?? 'Form One';
+        $chk = mysqli_query($conn, "SELECT id FROM marks WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$test_id'");
             if (mysqli_num_rows($chk) > 0) {
-                mysqli_query($conn, "UPDATE marks SET marks='$mark' WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$test_id'");
+                mysqli_query($conn, "UPDATE marks SET marks='$mark', form_level='$fl' WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$test_id'");
             } else {
-                mysqli_query($conn, "INSERT INTO marks(student_id,subject_id,exam_id,marks) VALUES('$sid','$subject_id','$test_id','$mark')");
+                mysqli_query($conn, "INSERT INTO marks(student_id,subject_id,exam_id,form_level,marks) VALUES('$sid','$subject_id','$test_id','$fl','$mark')");
             }
         }
     }
@@ -38,10 +40,17 @@ if (isset($_POST['save_marks'])) {
 }
 
 /* ── Students ── */
+$test_class = $test['class_name']; // e.g. "Form 1", "Form 2"
+$formFilter = '';
+if ($test_class) {
+    $form_map = ['Form 1'=>'Form One','Form 2'=>'Form Two','Form 3'=>'Form Three','Form 4'=>'Form Four'];
+    $fl = $form_map[$test_class] ?? '';
+    if ($fl) $formFilter = "AND s.form_level='$fl'";
+}
 $students_q = mysqli_query($conn,
     "SELECT s.* FROM students s
      JOIN student_subjects ss ON ss.student_id=s.id
-     WHERE ss.subject_id='$subject_id'
+     WHERE ss.subject_id='$subject_id' $formFilter
      ORDER BY s.first_name, s.last_name"
 );
 $students = [];

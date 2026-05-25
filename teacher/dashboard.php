@@ -31,104 +31,9 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
   <title>Teacher Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box}
-    body{background:#f3f4f6;font-family:system-ui;margin:0;}
-
-    .layout{display:flex;min-height:100vh;}
-
-    /* Sidebar (minimal, mobile-first) */
-    .sidebar{
-      position:fixed;inset:0 auto 0 0;width:260px;background:#0f2744;border-right:none;
-      padding:12px;transform:translateX(-100%);transition:transform .2s ease;z-index:1050;overflow:auto;
-    }
-    .sidebar.active{transform:translateX(0)}
-    .brand{font-weight:800;color:#fff;}
-    .sub{color:#93aec8;font-size:12px;}
-    .nav a{display:flex;gap:10px;align-items:center;padding:10px 10px;border-radius:10px;color:#cbd5e1;text-decoration:none;justify-content:space-between;}
-    .nav a:hover{background:rgba(255,255,255,.1);color:#fff;}
-    .nav a.active{background:rgba(255,255,255,.15);color:#fff;font-weight:700;}
-
-    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:none;z-index:1040;}
-    .overlay.active{display:block;}
-
-    /* Topbar */
-    .main{flex:1;padding:12px;}
-    .top{
-      background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:8px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .menu-btn{border:1px solid #e5e7eb;background:#fff;border-radius:10px;padding:6px 10px;flex-shrink:0;}
-
-    /* Welcome section */
-    .top-welcome{flex:1;min-width:0;padding:0 4px;}
-    .top-welcome .greeting{font-size:11px;color:#6b7280;}
-    .top-welcome .wname{font-size:14px;font-weight:800;color:#0f2744;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-    .top-welcome .wdate{font-size:11px;color:#6b7280;margin-top:1px;}
-    @media(max-width:480px){
-      .top-welcome .wdate{display:none;}
-    }
-
-    .frame{width:100%;border:0;border-radius:12px;background:#fff;min-height:calc(100vh - 88px);margin-top:10px;}
-
-    @media (min-width: 992px){
-      .sidebar{position:sticky;transform:none;}
-      .overlay{display:none !important;}
-      .main{margin-left:0;}
-      .menu-btn{display:none;}
-      .layout{align-items:stretch;}
-    }
-
-    /* ── Topbar right actions ── */
-    .topbar-actions{display:flex;align-items:center;gap:6px;}
-
-    .notif-btn{
-      position:relative;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:50%;
-      width:36px;height:36px;display:flex;align-items:center;justify-content:center;
-      cursor:pointer;color:#111827;font-size:16px;text-decoration:none;transition:background .15s;
-    }
-    .notif-btn:hover{background:#e5e7eb;color:#111827;}
-    .notif-badge{
-      position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;
-      border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:700;
-      display:flex;align-items:center;justify-content:center;border:2px solid #fff;
-    }
-
-    .profile-wrap{position:relative;}
-    .profile-btn{
-      display:flex;align-items:center;gap:6px;background:#f3f4f6;border:1px solid #e5e7eb;
-      border-radius:40px;padding:3px 10px 3px 3px;cursor:pointer;transition:background .15s;
-    }
-    .profile-btn:hover{background:#e5e7eb;}
-    .avatar{
-      width:30px;height:30px;border-radius:50%;
-      background:linear-gradient(135deg,#6366f1,#4338ca);
-      color:#fff;font-weight:700;font-size:12px;
-      display:flex;align-items:center;justify-content:center;
-    }
-    .name-text{font-size:12px;font-weight:600;color:#111827;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .chevron{font-size:10px;color:#6b7280;transition:transform .2s;}
-    .profile-btn.open .chevron{transform:rotate(180deg);}
-
-    .profile-dropdown{
-      display:none;position:absolute;top:calc(100% + 8px);right:0;
-      background:#fff;border:1px solid #e5e7eb;border-radius:14px;
-      box-shadow:0 8px 30px rgba(0,0,0,0.12);min-width:200px;z-index:2000;overflow:hidden;
-    }
-    .profile-dropdown.open{display:block;}
-    .pd-header{padding:12px 14px 10px;border-bottom:1px solid #f3f4f6;font-size:11px;color:#6b7280;}
-    .pd-header .pd-name{font-weight:700;font-size:13px;color:#111827;margin-bottom:2px;}
-    .profile-dropdown a{
-      display:flex;align-items:center;gap:10px;padding:10px 14px;
-      font-size:13px;color:#111827;text-decoration:none;transition:background .12s;
-    }
-    .profile-dropdown a:hover{background:#f3f4f6;}
-    .profile-dropdown a i{font-size:16px;width:20px;}
-    .pd-logout{color:#ef4444!important;border-top:1px solid #f3f4f6;}
-    .pd-logout i{color:#ef4444;}
-  </style>
+  <link href="../assets/css/shared.css" rel="stylesheet">
 </head>
-<body>
+<body class="theme-teacher">
 
 <div class="overlay" id="overlay"></div>
 
@@ -143,10 +48,12 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
       <a class="active" href="home.php" target="mainFrame">Home</a>
       <a href="enter_marks_hub.php" target="mainFrame">✏️ Enter Marks</a>
       <a href="teaching_progress.php" target="mainFrame">📚 Teaching Progress</a>
+      <a href="teaching_docs.php" target="mainFrame">📖 Teaching Docs</a>
       <a href="notifications.php" target="mainFrame">🔔 Notifications<?php if ($unread_notif > 0): ?> <span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?= $unread_notif ?></span><?php endif; ?></a>
       <a href="teacher_subject_analysis.php" target="mainFrame">📊 Analysis</a>
       <a href="teacher_exam_comparison.php" target="mainFrame">📈 Comparison</a>
       <a href="view_exam_results.php" target="mainFrame">📋 View Results</a>
+      <a href="academic_calendar.php" target="mainFrame">📅 Calendar</a>
     </nav>
   </aside>
 
@@ -197,6 +104,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
       </div>
     </div>
 
+    <div class="breadcrumb-bar" id="breadcrumbBar"></div>
     <iframe title="Teacher Content" class="frame" name="mainFrame" id="mainFrame" src="" loading="eager"></iframe>
   </main>
 </div>
@@ -216,10 +124,20 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
   });
   overlay.addEventListener('click', closeNav);
 
+  function updateBreadcrumb(href) {
+    var bar = document.getElementById('breadcrumbBar');
+    if (!bar) return;
+    var link = Array.from(links).find(l => l.getAttribute('href') === href);
+    if (!link) { bar.innerHTML = ''; return; }
+    var pageText = link.textContent.trim().replace(/\s+/g, ' ');
+    bar.innerHTML = '<span>Teacher</span><span class="bc-sep">›</span><span class="bc-page">' + pageText + '</span>';
+  }
+
   links.forEach(a => {
     a.addEventListener('click', () => {
       links.forEach(x => x.classList.remove('active'));
       a.classList.add('active');
+      updateBreadcrumb(a.getAttribute('href'));
       if (window.innerWidth < 992) closeNav();
       sessionStorage.setItem('teacherActivePage', a.getAttribute('href'));
     });
@@ -232,17 +150,11 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
   (function(){
     var saved = sessionStorage.getItem('teacherActivePage');
     var frame = document.getElementById('mainFrame');
-    if(saved && saved.trim() !== ''){
-      frame.src = saved;
-      links.forEach(function(l){
-        if(l.getAttribute('href') === saved) l.classList.add('active');
-      });
-    } else {
-      frame.src = 'home.php';
-      links.forEach(function(l){
-        if(l.getAttribute('href') === 'home.php') l.classList.add('active');
-      });
-    }
+    var target = (saved && saved.trim() !== '') ? saved : 'home.php';
+    frame.src = target;
+    links.forEach(function(l){ l.classList.remove('active'); });
+    links.forEach(function(l){ if(l.getAttribute('href') === target) l.classList.add('active'); });
+    updateBreadcrumb(target);
   })();
 
   // ── Profile dropdown ──
@@ -268,6 +180,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
     document.getElementById('mainFrame').src = url;
     links.forEach(l => l.classList.remove('active'));
     links.forEach(l => { if (l.getAttribute('href') === url) l.classList.add('active'); });
+    updateBreadcrumb(url);
     sessionStorage.setItem('teacherActivePage', url);
     if (window.innerWidth < 992) closeNav();
   }

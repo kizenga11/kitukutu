@@ -35,6 +35,10 @@ $test_name = $test['test_name'];
 GET RESULTS
 ========================= */
 
+$form_map = ['Form 1'=>'Form One','Form 2'=>'Form Two','Form 3'=>'Form Three','Form 4'=>'Form Four'];
+$form_level = $form_map[$test['class_name']] ?? '';
+$formFilter = $form_level ? " AND students.form_level='$form_level'" : '';
+
 $results = mysqli_query($conn,"
 SELECT 
 students.id,
@@ -42,11 +46,12 @@ students.first_name,
 students.second_name,
 students.last_name,
 students.sex,
+students.form_level,
 marks.marks
 FROM marks
 JOIN students ON students.id = marks.student_id
 WHERE marks.subject_id='$subject_id'
-AND marks.exam_id='$test_id'
+AND marks.exam_id='$test_id' $formFilter
 ORDER BY marks.marks DESC
 ") or die(mysqli_error($conn));
 
@@ -407,17 +412,21 @@ $female_avg = $female_count ? round($female_total/$female_count,2) : 0;
                     </tr>
                 </thead>
                 <tbody>
-                <?php
-                $pos = 1;
-                foreach($data as $row){
-                ?>
+                <?php if (empty($data)): ?>
+                    <tr>
+                        <td colspan="4" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+                            No marks entered for this test yet.
+                        </td>
+                    </tr>
+                <?php else: $pos = 1; foreach($data as $row): ?>
                     <tr>
                         <td data-label="Position"><?= $pos++ ?></td>
                         <td data-label="Name"><?= htmlspecialchars($row['first_name']." ".$row['second_name']." ".$row['last_name']) ?></td>
                         <td data-label="Gender"><?= htmlspecialchars($row['sex']) ?></td>
                         <td data-label="Marks"><strong><?= $row['marks'] ?></strong></td>
                     </tr>
-                <?php } ?>
+                <?php endforeach; endif; ?>
                 </tbody>
             </table>
         </div>

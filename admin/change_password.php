@@ -96,5 +96,6 @@ function togglePw(id, btn) {
   btn.innerHTML = show ? '<i class="bi bi-eye-slash"></i>' : '<i class="bi bi-eye"></i>';
 }
 </script>
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

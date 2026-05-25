@@ -25,9 +25,12 @@ if(isset($_POST['save_mark'])){
 
     if(mysqli_num_rows($check) > 0){
 
+        // Get student's form level
+        $fl_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT form_level FROM students WHERE id=$student_id"));
+        $fl = $fl_r ? $fl_r['form_level'] : 'Form One';
         mysqli_query($conn,"
             UPDATE marks 
-            SET marks=$marks 
+            SET marks=$marks, form_level='$fl'
             WHERE student_id=$student_id 
             AND subject_id=$subject_id 
             AND exam_id=$exam_id
@@ -35,9 +38,11 @@ if(isset($_POST['save_mark'])){
 
     } else {
 
+        $fl_r = mysqli_fetch_assoc(mysqli_query($conn, "SELECT form_level FROM students WHERE id=$student_id"));
+        $fl = $fl_r ? $fl_r['form_level'] : 'Form One';
         mysqli_query($conn,"
-            INSERT INTO marks(student_id,subject_id,exam_id,marks)
-            VALUES($student_id,$subject_id,$exam_id,$marks)
+            INSERT INTO marks(student_id,subject_id,exam_id,form_level,marks)
+            VALUES($student_id,$subject_id,$exam_id,'$fl',$marks)
         ");
     }
 
@@ -114,7 +119,7 @@ echo "<option value='{$sb['id']}'>{$sb['subject_name']}</option>";
 <input type="number" name="marks" min="0" max="100" class="form-control" required>
 </div>
 
-<button type="submit" name="save_mark" class="btn btn-primary">
+<button type="submit" name="save_mark" class="btn btn-primary" data-loading-text="Saving...">
 Save Marks
 </button>
 
@@ -124,5 +129,6 @@ Save Marks
 <script>
 document.querySelectorAll('.alert-dismissible').forEach(function(a){setTimeout(function(){a.classList.remove('show');a.style.display='none';},5000);});
 </script>
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

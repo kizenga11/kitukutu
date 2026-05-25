@@ -49,22 +49,35 @@ if(isset($_POST['update'])){
 
             // DELETE OLD ASSIGNMENTS
             mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$id'");
+            mysqli_query($conn,"DELETE FROM subject_settings WHERE teacher_id='$id'");
+
+            // Get active year & term
+            $yr = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM academic_years WHERE is_active=1 LIMIT 1"));
+            $tm = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM terms WHERE is_active=1 LIMIT 1"));
+            $yid = intval($yr['id']??0); $tid = intval($tm['id']??0);
 
             // INSERT NEW ASSIGNMENTS
             if(isset($_POST['assignments'])){
-                foreach($_POST['assignments'] as $subject_id){
+                foreach($_POST['assignments'] as $val){
+                    $parts = explode('|', $val);
+                    $sid = intval($parts[0]);
+                    $fl = $parts[1] ?? 'Form One';
 
-                    $sub = mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$subject_id'");
+                    $sub = mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$sid'");
                     $sub_data = mysqli_fetch_assoc($sub);
                     $stream = $sub_data['stream'];
                     $class_stream = ($stream == 'GENERAL') ? 'B' : 'A';
 
                     mysqli_query($conn,"
                         INSERT INTO teacher_assignments
-                        (teacher_id, subject_id, stream, class_stream)
+                        (teacher_id, subject_id, form_level, stream, class_stream)
                         VALUES
-                        ('$id','$subject_id','$stream','$class_stream')
+                        ('$id','$sid','$fl','$stream','$class_stream')
                     ");
+                    // Auto-create subject_settings
+                    if ($yid && $tid) {
+                        mysqli_query($conn,"INSERT IGNORE INTO subject_settings (teacher_id,subject_id,form_level,academic_year_id,term_id,is_active) VALUES ($id,$sid,'$fl',$yid,$tid,1)");
+                    }
                 }
             }
 
@@ -378,26 +391,32 @@ if(isset($_POST['update'])){
             <div class="row g-3 mb-5">
                 <?php
                 $current = [];
-                $old = mysqli_query($conn,"SELECT subject_id FROM teacher_assignments WHERE teacher_id='$id'");
+                $old = mysqli_query($conn,"SELECT subject_id, form_level FROM teacher_assignments WHERE teacher_id='$id'");
                 while($o=mysqli_fetch_assoc($old)){
-                    $current[] = $o['subject_id'];
+                    $current[] = $o['subject_id'].'|'.$o['form_level'];
                 }
 
+                $forms = ['Form One','Form Two','Form Three','Form Four'];
+                $short = ['F.1','F.2','F.3','F.4'];
                 $subjects = mysqli_query($conn,"SELECT * FROM subjects ORDER BY stream, subject_name");
                 while($row=mysqli_fetch_assoc($subjects)){
-                    $checked = in_array($row['id'],$current) ? "checked" : "";
                 ?>
                 <div class="col-md-6">
-                    <div class="form-check-custom">
-                        <input class="form-check-input"
-                               type="checkbox"
-                               name="assignments[]"
-                               value="<?= $row['id'] ?>"
-                               id="sub_<?= $row['id'] ?>" <?= $checked ?>>
-                        <label class="form-check-label" for="sub_<?= $row['id'] ?>">
-                            <strong><?= htmlspecialchars($row['subject_name']) ?></strong>
-                            <span class="badge bg-primary ms-2"><?= $row['stream'] ?></span>
-                        </label>
+                    <div class="form-check-custom" style="padding:0.6rem 1rem;">
+                        <div style="display:flex;align-items:center;gap:8px;width:100%;">
+                            <span style="font-weight:600;flex:1;font-size:0.9rem;"><?= htmlspecialchars($row['subject_name']) ?></span>
+                            <span class="badge bg-primary"><?= $row['stream'] ?></span>
+                        </div>
+                        <div style="display:flex;gap:4px;margin-top:6px;">
+                            <?php for ($fi=0;$fi<4;$fi++):
+                                $checked = in_array($row['id'].'|'.$forms[$fi], $current) ? 'checked' : '';
+                            ?>
+                            <label style="display:flex;align-items:center;gap:3px;font-size:11px;padding:3px 6px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;background:#f9fafb;">
+                                <input type="checkbox" name="assignments[]" value="<?=$row['id'].'|'.$forms[$fi]?>" <?=$checked?> style="width:12px;height:12px;margin:0;cursor:pointer;">
+                                <?=$short[$fi]?>
+                            </label>
+                            <?php endfor; ?>
+                        </div>
                     </div>
                 </div>
                 <?php } ?>
@@ -419,5 +438,6 @@ if(isset($_POST['update'])){
 <script>
 document.querySelectorAll('.alert-dismissible').forEach(function(a){setTimeout(function(){a.classList.remove('show');a.style.display='none';},5000);});
 </script>
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

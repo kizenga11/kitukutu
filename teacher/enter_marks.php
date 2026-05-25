@@ -6,6 +6,7 @@ if (!isset($_SESSION['teacher_id'])) { header("Location: ../login.php"); exit();
 $teacher_id = $_SESSION['teacher_id'];
 $exam_id    = intval($_GET['exam_id']  ?? 0);
 $subject_id = intval($_GET['subject_id'] ?? 0);
+$form_level = mysqli_real_escape_string($conn, $_GET['form_level'] ?? '');
 
 /* ── Weekly test or normal exam ── */
 $test = mysqli_fetch_assoc(mysqli_query($conn,
@@ -44,11 +45,12 @@ if (isset($_POST['save_marks'])) {
         } else {
             continue;
         }
+        $fl = $form_level ?: 'Form One';
         $chk = mysqli_query($conn, "SELECT id FROM marks WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$exam_id'");
         if (mysqli_num_rows($chk) > 0) {
-            mysqli_query($conn, "UPDATE marks SET marks='$mv' WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$exam_id'");
+            mysqli_query($conn, "UPDATE marks SET marks='$mv', form_level='$fl' WHERE student_id='$sid' AND subject_id='$subject_id' AND exam_id='$exam_id'");
         } else {
-            mysqli_query($conn, "INSERT INTO marks(student_id,subject_id,exam_id,marks) VALUES('$sid','$subject_id','$exam_id','$mv')");
+            mysqli_query($conn, "INSERT INTO marks(student_id,subject_id,exam_id,form_level,marks) VALUES('$sid','$subject_id','$exam_id','$fl','$mv')");
         }
         $saved_count++;
     }
@@ -57,10 +59,11 @@ if (isset($_POST['save_marks'])) {
 }
 
 /* ── Students ── */
+$formFilter = $form_level ? "AND s.form_level='$form_level'" : '';
 $students_q = mysqli_query($conn,
     "SELECT s.* FROM students s
      JOIN student_subjects ss ON ss.student_id=s.id
-     WHERE ss.subject_id='$subject_id'
+     WHERE ss.subject_id='$subject_id' $formFilter
      ORDER BY s.first_name, s.last_name"
 );
 $students = [];
@@ -202,7 +205,7 @@ localStorage.setItem('lastSaved_<?= $exam_id ?>_<?= $subject_id ?>', '<?= date('
     <a href="enter_marks_hub.php" class="back-btn">&#8592;</a>
     <div class="topbar-info">
         <div class="subject"><?= htmlspecialchars($subject_name) ?></div>
-        <div class="exam"><?= htmlspecialchars($exam_name) ?></div>
+        <div class="exam"><?= htmlspecialchars($exam_name) ?><?= $form_level ? ' &bull; '.htmlspecialchars($form_level) : '' ?></div>
     </div>
 </div>
 
@@ -222,7 +225,7 @@ localStorage.setItem('lastSaved_<?= $exam_id ?>_<?= $subject_id ?>', '<?= date('
 <?php if (empty($students)): ?>
 <div class="empty">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-    <p>No students found for this subject.</p>
+    <p>No students found for this subject<?= $form_level ? ' in '.htmlspecialchars($form_level) : '' ?>.</p>
 </div>
 <?php else: ?>
 <?php foreach ($students as $i => $row):

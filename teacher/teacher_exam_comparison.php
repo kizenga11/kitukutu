@@ -21,6 +21,14 @@ while ($e = mysqli_fetch_assoc($exams_q)) $exams_all[] = $e;
 $subject_id   = intval($_GET['subject']      ?? 0);
 $prev_exam_id = intval($_GET['prev_exam']    ?? 0);
 $curr_exam_id = intval($_GET['current_exam'] ?? 0);
+$form_level   = $_GET['form_level']          ?? '';
+
+// Form levels for selected subject
+$comp_form_levels = [];
+if ($subject_id) {
+    $fl_q = mysqli_query($conn,"SELECT DISTINCT ta.form_level FROM teacher_assignments ta WHERE ta.teacher_id=$teacher_id AND ta.subject_id=$subject_id ORDER BY ta.form_level");
+    if ($fl_q) while ($fl_r = mysqli_fetch_assoc($fl_q)) $comp_form_levels[] = $fl_r['form_level'];
+}
 
 $data = [];
 $avg_prev = $avg_curr = $subject_percent = 0;
@@ -40,12 +48,22 @@ if ($subject_id && $prev_exam_id && $curr_exam_id) {
         if ($e['id'] == $curr_exam_id) $curr_name = $e['exam_name'];
     }
 
+    /* Build filter for form_level */
+    $fl_where = '';
+    $fl_where_sub = '';
+    $fl_join  = '';
+    if ($form_level) {
+        $fl        = mysqli_real_escape_string($conn,$form_level);
+        $fl_where  = "AND COALESCE(m.form_level, s.form_level)='$fl'";
+        $fl_where_sub = "AND COALESCE(form_level,'$fl')='$fl'";
+    }
+
     /* Students in both exams */
     $stu_q = mysqli_query($conn,"
         SELECT DISTINCT s.id, s.first_name, s.second_name, s.last_name, s.sex
         FROM students s
         JOIN marks m ON m.student_id = s.id
-        WHERE m.subject_id = $subject_id AND m.exam_id IN ($prev_exam_id, $curr_exam_id)
+        WHERE m.subject_id = $subject_id AND m.exam_id IN ($prev_exam_id, $curr_exam_id) $fl_where
         ORDER BY s.first_name, s.last_name
     ");
 
@@ -53,8 +71,8 @@ if ($subject_id && $prev_exam_id && $curr_exam_id) {
         $sid  = $st['id'];
         $name = trim($st['first_name'] . ' ' . ($st['second_name'] ? $st['second_name'].' ' : '') . $st['last_name']);
 
-        $r1 = mysqli_fetch_assoc(mysqli_query($conn,"SELECT marks FROM marks WHERE student_id=$sid AND subject_id=$subject_id AND exam_id=$prev_exam_id LIMIT 1"));
-        $r2 = mysqli_fetch_assoc(mysqli_query($conn,"SELECT marks FROM marks WHERE student_id=$sid AND subject_id=$subject_id AND exam_id=$curr_exam_id LIMIT 1"));
+        $r1 = mysqli_fetch_assoc(mysqli_query($conn,"SELECT marks FROM marks WHERE student_id=$sid AND subject_id=$subject_id AND exam_id=$prev_exam_id $fl_where_sub LIMIT 1"));
+        $r2 = mysqli_fetch_assoc(mysqli_query($conn,"SELECT marks FROM marks WHERE student_id=$sid AND subject_id=$subject_id AND exam_id=$curr_exam_id $fl_where_sub LIMIT 1"));
 
         $m1 = isset($r1['marks']) && is_numeric($r1['marks']) ? (float)$r1['marks'] : null;
         $m2 = isset($r2['marks']) && is_numeric($r2['marks']) ? (float)$r2['marks'] : null;
@@ -218,7 +236,7 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
   <a href="javascript:history.back()" class="back-btn">&#8592;</a>
   <div class="topbar-info">
     <div class="title">Exam Comparison</div>
-    <div class="sub"><?= $subject_name ? htmlspecialchars($subject_name) . ' &mdash; ' . htmlspecialchars($prev_name) . ' vs ' . htmlspecialchars($curr_name) : 'Compare student performance across two exams' ?></div>
+    <div class="sub"><?= $subject_name ? htmlspecialchars($subject_name) . ' &mdash; ' . htmlspecialchars($prev_name) . ' vs ' . htmlspecialchars($curr_name) . ($form_level ? ' &mdash; '.str_replace('Form ','F. ',$form_level) : '') : 'Compare student performance across two exams' ?></div>
   </div>
 </div>
 
@@ -230,11 +248,20 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
       <div style="display:grid;gap:10px;">
         <div>
           <div class="label">Subject</div>
-          <select name="subject" class="form-select" required>
+          <select name="subject" class="form-select" required onchange="this.form.submit()">
             <option value="">Select subject...</option>
             <?php while ($s = mysqli_fetch_assoc($subjects_q)): ?>
             <option value="<?= $s['id'] ?>" <?= $subject_id == $s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['subject_name']) ?></option>
             <?php endwhile; ?>
+          </select>
+        </div>
+        <div>
+          <div class="label">Form Level</div>
+          <select name="form_level" class="form-select">
+            <option value="">All Forms</option>
+            <?php foreach ($comp_form_levels as $fl): ?>
+            <option value="<?= $fl ?>" <?= $form_level === $fl ? 'selected' : '' ?>><?= str_replace('Form ','F. ',$fl) ?></option>
+            <?php endforeach; ?>
           </select>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">

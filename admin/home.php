@@ -17,6 +17,9 @@ if (($data['role'] ?? '') != 'admin') {
 }
 
 $total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students"))['total'] ?? 0;
+$form_counts = [];
+$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students GROUP BY form_level ORDER BY form_level");
+if ($fc_q) while ($fc_r = mysqli_fetch_assoc($fc_q)) $form_counts[$fc_r['form_level']] = $fc_r['total'];
 $total_teachers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM teachers"))['total'] ?? 0;
 $total_exams = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM exams"))['total'] ?? 0;
 $total_announcements = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM announcements WHERE status='published'"))['total'] ?? 0;
@@ -59,6 +62,23 @@ $recent_announcements = mysqli_query($conn, "SELECT title, type, created_at FROM
   <div class="cardx stat"><div class="n"><?= (int)$pending_admissions ?></div><div class="l">Pending Admissions</div></div>
   <div class="cardx stat"><div class="n"><?= (int)$unread_messages ?></div><div class="l">Unread Messages</div></div>
 </div>
+
+<!-- Form Level Breakdown -->
+<?php if (!empty($form_counts)): ?>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+  <?php
+  $form_colors = ['Form One'=>'#3b82f6','Form Two'=>'#10b981','Form Three'=>'#f59e0b','Form Four'=>'#ef4444'];
+  foreach ($form_counts as $fl => $cnt):
+    $color = $form_colors[$fl] ?? '#6b7280';
+  ?>
+  <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:6px 12px;">
+    <span style="width:10px;height:10px;border-radius:50%;background:<?= $color ?>;flex-shrink:0;"></span>
+    <span style="font-weight:700;font-size:14px;"><?= (int)$cnt ?></span>
+    <span style="font-size:12px;color:#6b7280;"><?= str_replace('Form ','F. ',$fl) ?></span>
+  </div>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
 
 <div class="row g-3">
   <div class="col-12 col-lg-6">

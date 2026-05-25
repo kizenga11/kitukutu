@@ -9,6 +9,7 @@ if(!isset($_SESSION['admin_id'])){
 
 $exam_id = intval($_GET['exam_id'] ?? 0);
 $mode = $_GET['mode'] ?? 'grade';
+$form_level_filter = isset($_GET['form_level']) ? mysqli_real_escape_string($conn, $_GET['form_level']) : '';
 
 if(!$exam_id){ die("No exam selected"); }
 
@@ -34,8 +35,11 @@ if(!$ex){
 $exam_name = $exam_data['exam_name'] ?? '';
 $exam_parent_msg = $exam_data['parent_message'] ?? '';
 
-$chk = mysqli_query($conn,"SELECT COUNT(*) total FROM exam_results_summary WHERE exam_id='$exam_id'");
-$processed = mysqli_fetch_assoc($chk)['total'] > 0;
+$flFilterSql = $form_level_filter ? " AND COALESCE(ers.form_level, s.form_level)='$form_level_filter'" : '';
+
+$chkCountSql = "SELECT COUNT(*) total FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql";
+$chk = mysqli_query($conn, $chkCountSql);
+$processed = $chk ? (mysqli_fetch_assoc($chk)['total'] > 0) : false;
 
 function grade($m){
     if($m >= 75) return 'A';
@@ -311,6 +315,20 @@ body{
         <button onclick="window.print()" class="btn btn-print">🖨 Print</button>
         <a href="?exam_id=<?= $exam_id ?>&mode=grade" class="btn <?= $mode=='grade'?'btn-light active':'btn-light' ?>">Grades</a>
         <a href="?exam_id=<?= $exam_id ?>&mode=marks" class="btn <?= $mode=='marks'?'btn-light active':'btn-light' ?>">Marks</a>
+        <?php
+        $fl_q = mysqli_query($conn,"SELECT form_level FROM exam_form_levels WHERE exam_id='$exam_id'");
+        if ($fl_q && mysqli_num_rows($fl_q)>0):
+        ?>
+        <span style="display:flex;gap:3px;margin-left:6px;padding-left:6px;border-left:1px solid rgba(255,255,255,0.2);">
+            <a href="?exam_id=<?= $exam_id ?>&mode=<?= $mode ?>&form_level=" class="btn <?= !$form_level_filter?'btn-light active':'btn-light' ?>" style="font-size:11px;">All</a>
+            <?php while($fl_r=mysqli_fetch_assoc($fl_q)):
+                $fl_short = str_replace('Form ','F.',$fl_r['form_level']);
+                $active = $form_level_filter === $fl_r['form_level'] ? 'btn-light active' : 'btn-light';
+            ?>
+            <a href="?exam_id=<?= $exam_id ?>&mode=<?= $mode ?>&form_level=<?= urlencode($fl_r['form_level']) ?>" class="btn <?= $active ?>" style="font-size:11px;"><?= $fl_short ?></a>
+            <?php endwhile; ?>
+        </span>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -360,7 +378,7 @@ $divOrder = ['I','II','III','IV','0','N/A'];
 if($summary_json && isset($summary_json['divisions'])){
     $divisions = $summary_json['divisions'];
 } else {
-    $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' GROUP BY ers.division,s.sex");
+    $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql GROUP BY ers.division,s.sex");
     $divisions = [];
     while($d=mysqli_fetch_assoc($divQ)){
         $dn = $d['division'] ?: '0';
@@ -429,6 +447,7 @@ $schoolInfo = $summary_json['school'] ?? null;
             <th>#</th>
             <th>Student Name</th>
             <th>Sex</th>
+            <?php if(!$form_level_filter): ?><th>Form</th><?php endif; ?>
             <th>Avg</th>
             <th>Grade</th>
             <th>Pts</th>
@@ -439,11 +458,11 @@ $schoolInfo = $summary_json['school'] ?? null;
     <tbody>
         <?php
         $students = mysqli_query($conn,"
-            SELECT s.id, s.first_name, s.second_name, s.last_name, s.sex,
+            SELECT s.id, s.first_name, s.second_name, s.last_name, s.sex, s.form_level,
                    ers.total_points, ers.division, ers.position, ers.average_marks
             FROM exam_results_summary ers
             JOIN students s ON s.id = ers.student_id
-            WHERE ers.exam_id = '$exam_id'
+            WHERE ers.exam_id = '$exam_id' $flFilterSql
             ORDER BY ers.position ASC
         ");
 
@@ -488,6 +507,7 @@ $schoolInfo = $summary_json['school'] ?? null;
             <td data-label="#" class="pos-val"><?= (int)$st['position'] ?></td>
             <td data-label="Name" class="name-col"><?= htmlspecialchars($full_name) ?></td>
             <td data-label="Sex"><?= $st['sex']=='Male'?'M':'F' ?></td>
+            <?php if(!$form_level_filter): ?><td data-label="Form"><?= str_replace('Form ','F.',htmlspecialchars($st['form_level']??'')) ?></td><?php endif; ?>
             <td data-label="Avg" class="avg-val"><?= number_format((float)$st['average_marks'],2) ?></td>
             <td data-label="Grade" class="grade-val"><?= $avg_grade ?></td>
             <td data-label="Pts" class="pts-val"><?= (int)$st['total_points'] ?></td>
@@ -500,24 +520,48 @@ $schoolInfo = $summary_json['school'] ?? null;
 </div>
 </div>
 
-<!-- SUBJECT PERFORMANCE SUMMARY -->
-<?php if($summary_json && isset($summary_json['subject_grades'])): $sgs=$summary_json['subject_grades']; ?>
+<!-- SUBJECT PERFORMANCE SUMMARY (live query, all streams) -->
+<?php
+$sg_q_a = mysqli_query($conn, "
+    SELECT m.subject_id, sbj.subject_name,
+           COUNT(*) as total,
+           SUM(CASE WHEN m.marks >= 75 THEN 1 ELSE 0 END) as grade_a,
+           SUM(CASE WHEN m.marks >= 65 AND m.marks < 75 THEN 1 ELSE 0 END) as grade_b,
+           SUM(CASE WHEN m.marks >= 45 AND m.marks < 65 THEN 1 ELSE 0 END) as grade_c,
+           SUM(CASE WHEN m.marks >= 30 AND m.marks < 45 THEN 1 ELSE 0 END) as grade_d,
+           SUM(CASE WHEN m.marks >= 0 AND m.marks < 30 THEN 1 ELSE 0 END) as grade_f,
+           AVG(m.marks) as avg_mark
+    FROM marks m
+    JOIN subjects sbj ON sbj.id = m.subject_id
+    WHERE m.exam_id = '$exam_id'
+      AND m.marks != 'A'
+    GROUP BY m.subject_id, sbj.subject_name
+    ORDER BY avg_mark DESC
+");
+$sg_data_a = [];
+$pos = 1;
+while ($sg_r = mysqli_fetch_assoc($sg_q_a)) {
+    $sg_r['pos'] = $pos++;
+    $sg_data_a[] = $sg_r;
+}
+?>
+<?php if (!empty($sg_data_a)): ?>
 <div class="subj-section">
     <div class="summary-title" style="margin-bottom:8px;">Subject Performance Summary</div>
     <div class="table-wrap">
         <table class="subj-table">
             <tr><th>#</th><th>Subject</th><th>A</th><th>B</th><th>C</th><th>D</th><th>F</th><th>Avg</th><th>Grade</th></tr>
-            <?php foreach($sgs as $sg): ?>
+            <?php foreach($sg_data_a as $sg): ?>
             <tr>
-                <td style="font-weight:700;"><?= (int)($sg['pos']??0) ?></td>
-                <td style="text-align:left;font-weight:600;"><?= htmlspecialchars($sg['name']??'') ?></td>
-                <td style="color:#27ae60;"><?= (int)($sg['A']??0) ?></td>
-                <td style="color:#2980b9;"><?= (int)($sg['B']??0) ?></td>
-                <td style="color:#f39c12;"><?= (int)($sg['C']??0) ?></td>
-                <td style="color:#e67e22;"><?= (int)($sg['D']??0) ?></td>
-                <td style="color:#c0392b;"><?= (int)($sg['F']??0) ?></td>
-                <td style="font-weight:700;color:#1a1a2e;"><?= number_format((float)($sg['avg']??0),2) ?></td>
-                <td style="font-weight:800;font-size:13px;"><?= $sg['grade']??'-' ?></td>
+                <td style="font-weight:700;"><?= $sg['pos'] ?></td>
+                <td style="text-align:left;font-weight:600;"><?= htmlspecialchars($sg['subject_name']) ?></td>
+                <td style="color:#27ae60;"><?= (int)$sg['grade_a'] ?></td>
+                <td style="color:#2980b9;"><?= (int)$sg['grade_b'] ?></td>
+                <td style="color:#f39c12;"><?= (int)$sg['grade_c'] ?></td>
+                <td style="color:#e67e22;"><?= (int)$sg['grade_d'] ?></td>
+                <td style="color:#c0392b;"><?= (int)$sg['grade_f'] ?></td>
+                <td style="font-weight:700;color:#1a1a2e;"><?= number_format((float)$sg['avg_mark'],2) ?></td>
+                <td style="font-weight:800;font-size:13px;"><?= grade($sg['avg_mark']) ?></td>
             </tr>
             <?php endforeach; ?>
         </table>

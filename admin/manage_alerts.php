@@ -116,7 +116,12 @@ body{background:#f4f7fc;font-family:system-ui;padding:14px;}
 <div class="d-flex align-items-center justify-content-between mb-3 page-hdr">
   <h5 class="mb-0 fw-bold"><i class="bi bi-megaphone text-warning me-2"></i>Manage Alerts & Notifications</h5>
   <div class="d-flex gap-2 flex-wrap">
-    <a href="?auto_check=1" class="btn btn-sm btn-outline-warning" onclick="return confirm('Run auto-check for teachers with no topics?')">
+    <a href="?auto_check=1" class="btn btn-sm btn-outline-warning"
+       data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+       data-confirm-href="?auto_check=1"
+       data-confirm-msg="Run auto-check for teachers with no topics? This will send system alerts."
+       data-confirm-label="Run Check"
+       data-confirm-class="btn-warning">
       <i class="bi bi-robot me-1"></i>Auto-Check Teachers
     </a>
     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#newAlertModal">
@@ -168,7 +173,12 @@ while ($n = mysqli_fetch_assoc($alerts)):
       </div>
     </div>
     <a href="?delete=<?= $n['id'] ?>" class="btn btn-sm btn-outline-danger" style="padding:2px 8px;font-size:11px"
-       onclick="return confirm('Delete this alert?')" title="Delete">
+       data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+       data-confirm-href="?delete=<?= $n['id'] ?>"
+       data-confirm-msg="Delete this alert? This cannot be undone."
+       data-confirm-label="Delete"
+       data-confirm-class="btn-danger"
+       title="Delete">
       <i class="bi bi-trash"></i>
     </a>
   </div>
@@ -221,6 +231,48 @@ while ($n = mysqli_fetch_assoc($alerts)):
   </div>
 </div>
 
+<!-- Shared Confirm Modal (delete + auto-check) -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center pt-1 px-4">
+        <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:2.4rem;"></i>
+        <h6 class="fw-bold mt-2 mb-1">Please Confirm</h6>
+        <p class="text-muted small mb-0" id="deleteConfirmMsg">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2 pt-2">
+        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-sm px-4" id="deleteConfirmBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  var modal = document.getElementById('deleteConfirmModal');
+  var confirmBtn = document.getElementById('deleteConfirmBtn');
+  var pendingHref = null;
+
+  modal.addEventListener('show.bs.modal', function (e) {
+    var t = e.relatedTarget;
+    if (!t) return;
+    document.getElementById('deleteConfirmMsg').textContent =
+      t.getAttribute('data-confirm-msg') || 'This action cannot be undone.';
+    confirmBtn.textContent = t.getAttribute('data-confirm-label') || 'Confirm';
+    confirmBtn.className = 'btn btn-sm px-4 ' + (t.getAttribute('data-confirm-class') || 'btn-primary');
+    pendingHref = t.getAttribute('data-confirm-href');
+  });
+
+  confirmBtn.addEventListener('click', function () {
+    if (pendingHref) window.location.href = pendingHref;
+    bootstrap.Modal.getInstance(modal).hide();
+  });
+})();
+</script>
 </body>
 </html>

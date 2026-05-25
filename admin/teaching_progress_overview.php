@@ -34,7 +34,7 @@ $data = mysqli_query($conn,"
     SELECT ss.id AS ss_id,
            t.id AS teacher_id,
            CONCAT(t.first_name,' ',t.last_name) AS teacher_name,
-           sub.subject_name, sub.stream,
+           sub.subject_name, sub.stream, ss.form_level,
            COUNT(tp.id) AS total_topics,
            SUM(tp.teaching_status='Taught') AS taught,
            SUM(tp.teaching_status='In Progress') AS inprog,
@@ -48,7 +48,7 @@ $data = mysqli_query($conn,"
     LEFT JOIN teaching_progress_log tpl ON tpl.topic_id=tp.id
     WHERE $where
     GROUP BY ss.id
-    ORDER BY teacher_name, sub.subject_name
+    ORDER BY teacher_name, sub.subject_name, ss.form_level
 ");
 
 $rows = [];
@@ -185,6 +185,7 @@ $good_cov   = array_filter($rows, fn($r) => $r['avg_pct'] >= 80);
       <th>#</th>
       <th>Teacher</th>
       <th>Subject</th>
+      <th>Form</th>
       <th>Stream</th>
       <th class="text-center">Topics</th>
       <th class="text-center">Taught</th>
@@ -211,6 +212,7 @@ $good_cov   = array_filter($rows, fn($r) => $r['avg_pct'] >= 80);
     <td class="text-muted"><?= $i+1 ?></td>
     <td class="fw-semibold"><?= htmlspecialchars($r['teacher_name']) ?></td>
     <td><?= htmlspecialchars($r['subject_name']) ?></td>
+    <td><?= str_replace('Form ','F. ',$r['form_level']??'F.1') ?></td>
     <td><span class="badge-s <?= $r['stream']==='GENERAL' ? 's-taught' : 's-inprog' ?>"><?= $r['stream'] ?></span></td>
     <td class="text-center"><?= $total ?></td>
     <td class="text-center"><span class="badge-s s-taught"><?= $taught ?></span></td>

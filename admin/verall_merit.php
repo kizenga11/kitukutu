@@ -50,6 +50,7 @@ function schoolGrade($avg){
 <title>Overall School Merit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
 body{background:#f4f6f9;}
 .school-header{text-align:center;}
@@ -90,8 +91,14 @@ body{background:#f4f6f9;}
 
 <?php
 $position=1;
-
-while($row=mysqli_fetch_assoc($results)){
+if (mysqli_num_rows($results) === 0): ?>
+<tr>
+  <td colspan="8" class="text-center py-5 text-muted">
+    <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+    No results processed for this exam yet.
+  </td>
+</tr>
+<?php else: while($row=mysqli_fetch_assoc($results)):
 
 $total_students++;
 $total_avg += $row['average_marks'];
@@ -111,7 +118,7 @@ $grade_count[ schoolGrade($row['average_marks']) ]++;
 <td><?= $row['division'] ?></td>
 </tr>
 
-<?php } ?>
+<?php endwhile; endif; ?>
 
 </table>
 </div>

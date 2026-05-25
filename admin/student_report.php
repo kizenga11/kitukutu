@@ -29,6 +29,25 @@ $subs = mysqli_query($conn, "
     ORDER BY sub.subject_name
 ");
 
+// Previous exams for same form level
+$form_level = mysqli_real_escape_string($conn, $stu['form_level'] ?? '');
+$prev_exams_query = mysqli_query($conn, "
+    SELECT e.exam_name, e.start_date, ers.average_marks, ers.position, ers.total_points, ers.division
+    FROM exam_results_summary ers
+    JOIN exams e ON e.id = ers.exam_id
+    WHERE ers.student_id = $student_id
+      AND ers.form_level = '$form_level'
+      AND ers.exam_id != $exam_id
+    ORDER BY e.start_date DESC
+    LIMIT 6
+");
+$prev_data = [];
+if ($prev_exams_query) {
+    while ($pr = mysqli_fetch_assoc($prev_exams_query)) {
+        $prev_data[] = $pr;
+    }
+}
+
 function gradePoint($m) {
     if ($m >= 75) return 1;
     elseif ($m >= 65) return 2;
@@ -70,14 +89,14 @@ if (empty($parent_msg)) {
 
     $parent_msg = "Mzazi mpendwa wa {$student_name}, matokeo ya '{$exam['exam_name']}' yamehitimishwa. ";
     $parent_msg .= "Amepata wastani wa {$avg_marks}% ";
-    if($division) $parent_msg .= "na daraja la {$division}, ";
+    if ($division) $parent_msg .= "na daraja la {$division}, ";
     $parent_msg .= "nafasi ya {$position} kati ya wanafunzi {$total_students}. ";
 
-    if ($avg >= 75) $parent_msg .= "Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.";
-    elseif ($avg >= 65) $parent_msg .= "Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.";
-    elseif ($avg >= 45) $parent_msg .= "Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.";
-    elseif ($avg >= 30) $parent_msg .= "Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.";
-    else $parent_msg .= "Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.";
+    if ($avg >= 75)      $parent_msg .= "Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.";
+    elseif ($avg >= 65)  $parent_msg .= "Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.";
+    elseif ($avg >= 45)  $parent_msg .= "Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.";
+    elseif ($avg >= 30)  $parent_msg .= "Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.";
+    else                 $parent_msg .= "Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.";
 }
 ?>
 <!DOCTYPE html>
@@ -90,43 +109,51 @@ if (empty($parent_msg)) {
 body{background:#e2e3e5;font-family:'Times New Roman',Times,serif;padding:15px 0;}
 .page{
     width:210mm;min-height:297mm;background:#fff;
-    margin:0 auto;padding:12mm 14mm 10mm 14mm;
+    margin:0 auto;padding:10mm 12mm 8mm 12mm;
     box-shadow:0 2px 8px rgba(0,0,0,0.1);position:relative;
-    page-break-after:avoid;
 }
-.hdr{text-align:center;margin-bottom:12px;border-bottom:2px solid #000;padding-bottom:8px;}
-.hdr .school{font-size:22px;font-weight:700;letter-spacing:1px;}
-.hdr .sub{font-size:14px;margin-top:3px;}
-.hdr .title{font-size:16px;font-weight:700;margin-top:4px;}
-.info{display:flex;flex-wrap:wrap;justify-content:space-between;padding:8px 0;margin:8px 0;border-top:1px solid #555;border-bottom:1px solid #555;font-size:13px;line-height:1.7;}
-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:12px;}
-th,td{border:1px solid #000;padding:6px 6px;text-align:center;vertical-align:middle;}
-th{background:#f0f0f0;font-size:12px;font-weight:700;}
-.subj-table td:first-child{text-align:left;padding-left:10px;}
-.sec-title{margin:10px 0 5px;font-weight:700;font-size:14px;text-align:center;}
-.comment-box{padding:8px 12px;margin:5px 0;font-size:12px;line-height:1.6;border-left:4px solid #2c6e2f;background:#faf9f8;}
-.sign-row{margin-top:28px;display:flex;justify-content:space-between;font-size:11px;text-align:center;}
+.hdr{text-align:center;margin-bottom:8px;border-bottom:2px solid #000;padding-bottom:6px;}
+.hdr .school{font-size:20px;font-weight:700;letter-spacing:1px;}
+.hdr .sub{font-size:13px;margin-top:2px;}
+.hdr .title{font-size:14px;font-weight:700;margin-top:3px;}
+.info{display:flex;flex-wrap:wrap;justify-content:space-between;padding:5px 0;margin:5px 0;border-top:1px solid #555;border-bottom:1px solid #555;font-size:12px;line-height:1.6;}
+table{width:100%;border-collapse:collapse;margin:5px 0;font-size:11.5px;}
+th,td{border:1px solid #000;padding:4px 5px;text-align:center;vertical-align:middle;}
+th{background:#f0f0f0;font-size:11.5px;font-weight:700;}
+.subj-table td:first-child{text-align:left;padding-left:8px;}
+.sec-title{margin:7px 0 4px;font-weight:700;font-size:12px;text-align:center;text-transform:uppercase;letter-spacing:.5px;}
+.comment-box{padding:6px 10px;margin:4px 0;font-size:11px;line-height:1.5;border-left:4px solid #2c6e2f;background:#faf9f8;}
+.sign-row{margin-top:20px;display:flex;justify-content:space-between;font-size:10.5px;text-align:center;}
 .sign-item{width:30%;}
-.behavior-table td,.behavior-table th{padding:3px 4px;font-size:10px;}
-.behavior-table td:first-child{width:35px;}
-.gpa-info{font-size:12px;text-align:right;margin-top:-2px;margin-bottom:5px;padding:4px 6px;background:#f5f5f5;}
-.footer-date{font-size:10px;text-align:center;color:#666;margin-top:14px;border-top:1px solid #ddd;padding-top:8px;}
+.behavior-table td,.behavior-table th{padding:2px 4px;font-size:9.5px;}
+.behavior-table td:first-child{width:30px;}
+.gpa-info{font-size:11px;text-align:right;margin-top:-2px;margin-bottom:4px;padding:3px 6px;background:#f5f5f5;}
+.history-table th,.history-table td{padding:2px 5px;font-size:9.5px;}
+.history-table td:first-child{text-align:left;max-width:90mm;}
+.footer-date{font-size:9.5px;text-align:center;color:#666;margin-top:10px;border-top:1px solid #ddd;padding-top:6px;}
 .print-btn{position:fixed;bottom:20px;right:20px;padding:10px 20px;background:#0b5e2e;color:#fff;border:none;border-radius:40px;font-weight:700;cursor:pointer;font-size:14px;z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.2);}
+.msg-stats{display:flex;gap:10px;flex-wrap:wrap;font-size:9.5px;font-weight:700;color:#7a5800;border-bottom:1px solid #f0d080;margin-bottom:5px;padding-bottom:4px;}
+.no-history{font-size:10px;color:#888;padding:3px 8px;font-style:italic;}
 
 @media print{
-    @page{size:A4 portrait;margin:8mm 12mm;}
-    body{background:#fff;margin:0;padding:0;font-size:11px;}
-    .page{width:100%;min-height:100%;margin:0;padding:8mm 12mm 6mm 12mm;box-shadow:none;}
-    .hdr .school{font-size:20px;}
-    .hdr .title{font-size:15px;}
-    .info{font-size:12px;padding:6px 0;}
-    table{font-size:11px;margin:6px 0;}
-    th,td{padding:5px 5px;}
-    .sec-title{font-size:13px;margin:8px 0 4px;}
-    .comment-box{font-size:11px;padding:6px 10px;}
-    .sign-row{margin-top:22px;font-size:10px;}
-    .gpa-info{font-size:11px;}
-    .footer-date{font-size:9px;margin-top:12px;}
+    @page{size:A4 portrait;margin:6mm 9mm;}
+    body{background:#fff;margin:0;padding:0;}
+    .page{width:100%;min-height:0;height:auto;margin:0;padding:0;box-shadow:none;}
+    .hdr{margin-bottom:5px;padding-bottom:4px;}
+    .hdr .school{font-size:17px;}
+    .hdr .sub{font-size:11px;}
+    .hdr .title{font-size:12px;}
+    .info{font-size:10.5px;padding:3px 0;margin:3px 0;line-height:1.4;}
+    table{font-size:10px;margin:3px 0;}
+    th,td{padding:3px 4px;}
+    .sec-title{font-size:11px;margin:5px 0 3px;}
+    .comment-box{font-size:10px;padding:3px 8px;margin:3px 0;}
+    .behavior-table th,.behavior-table td{padding:1px 3px;font-size:9px;}
+    .history-table th,.history-table td{padding:1px 4px;font-size:9px;}
+    .sign-row{margin-top:12px;font-size:9.5px;}
+    .gpa-info{font-size:10px;padding:2px 5px;margin-bottom:3px;}
+    .footer-date{font-size:8.5px;margin-top:7px;padding-top:4px;}
+    .msg-stats{font-size:9px;gap:8px;margin-bottom:3px;padding-bottom:3px;}
     .print-btn{display:none;}
 }
 </style>
@@ -142,12 +169,12 @@ th{background:#f0f0f0;font-size:12px;font-weight:700;}
 
     <div class="info">
         <div><b>Jina:</b> <?= htmlspecialchars($stu['first_name']." ".$stu['second_name']." ".$stu['last_name']) ?></div>
-        <div><b>Jinsia:</b> <?= htmlspecialchars($stu['sex']) ?> &nbsp;|&nbsp; <b>Mkondo:</b> <?= htmlspecialchars($stu['stream']) ?></div>
+        <div><b>Jinsia:</b> <?= htmlspecialchars($stu['sex']) ?> &nbsp;|&nbsp; <b>Kidato:</b> <?= htmlspecialchars($stu['form_level'] ?? '') ?> &nbsp;|&nbsp; <b>Mkondo:</b> <?= htmlspecialchars($stu['stream']) ?></div>
         <div><b>Tarehe:</b> <?= htmlspecialchars($exam['start_date']) ?> &nbsp;|&nbsp; <b>Wastani:</b> <?= number_format($sum['average_marks'],2) ?>%</div>
     </div>
 
     <table class="subj-table">
-        <tr><th style="width:50%">SOMO</th><th style="width:20%">ALAMA</th><th style="width:15%">DARAJA</th><th style="width:15%">POINTI</th></tr>
+        <tr><th style="width:52%">SOMO</th><th style="width:18%">ALAMA</th><th style="width:15%">DARAJA</th><th style="width:15%">POINTI</th></tr>
         <?php
         $total_points=0; $total_sub=0;
         while ($s=mysqli_fetch_assoc($subs)){
@@ -155,7 +182,7 @@ th{background:#f0f0f0;font-size:12px;font-weight:700;}
             $g=gradeLet($mk);
             $pt=gradePoint($mk);
             $total_points+=$pt; $total_sub++;
-            echo "<tr><td style='text-align:left'>".htmlspecialchars($s['subject_name'])."</td><td>".($mk?$mk:'—')."</td><td>$g</td><td>$pt</td></tr>";
+            echo "<tr><td style='text-align:left;padding-left:8px'>".htmlspecialchars($s['subject_name'])."</td><td>".($mk?$mk:'—')."</td><td>$g</td><td>$pt</td></tr>";
         }
         $gpa=$total_sub>0?round($total_points/$total_sub,2):0;
         ?>
@@ -168,32 +195,58 @@ th{background:#f0f0f0;font-size:12px;font-weight:700;}
         <?php if($sum['total_points']): ?> &nbsp;|&nbsp; <b>Jumla Pointi:</b> <?= (int)$sum['total_points'] ?><?php endif; ?>
     </div>
 
-    <div class="sec-title">TABIA NA MWENENDO</div>
+    <!-- HISTORIA YA MITIHANI -->
+    <div class="sec-title">Historia ya Mitihani — <?= htmlspecialchars($stu['form_level'] ?? '') ?></div>
+    <?php if (empty($prev_data)): ?>
+        <div class="no-history">Hakuna matokeo ya mitihani ya awali kwa kidato hiki.</div>
+    <?php else: ?>
+    <table class="history-table">
+        <tr>
+            <th style="text-align:left;width:45%">MTIHANI</th>
+            <th>TAREHE</th>
+            <th>WASTANI</th>
+            <th>NAFASI</th>
+            <th>DARAJA</th>
+            <th>POINTI</th>
+        </tr>
+        <?php foreach ($prev_data as $pr):
+            $pa = (float)$pr['average_marks'];
+            if ($pa >= 75) $pg = 'A'; elseif ($pa >= 65) $pg = 'B'; elseif ($pa >= 45) $pg = 'C'; elseif ($pa >= 30) $pg = 'D'; else $pg = 'F';
+        ?>
+        <tr>
+            <td style="text-align:left"><?= htmlspecialchars($pr['exam_name']) ?></td>
+            <td><?= htmlspecialchars(date('d/m/y', strtotime($pr['start_date']))) ?></td>
+            <td><?= number_format($pa,1) ?>%</td>
+            <td><?= (int)$pr['position'] ?></td>
+            <td><?= htmlspecialchars($pr['division'] ?: $pg) ?></td>
+            <td><?= (int)$pr['total_points'] ?></td>
+        </tr>
+        <?php endforeach; ?>
+    </table>
+    <?php endif; ?>
+
+    <div class="sec-title">Tabia na Mwenendo</div>
     <table class="behavior-table">
-        <tr><th>NO</th><th>MAELEZO</th><th>ALAMA</th></tr>
-        <tr><td>1</td><td>KUFANYA KAZI KWA BIDII</td><td>____</td></tr>
-        <tr><td>2</td><td>KUPENDA KUHESHIMU NA KUTHAMINI KAZI</td><td>____</td></tr>
-        <tr><td>3</td><td>UANGALIFU WA MALI ZA UMA</td><td>____</td></tr>
-        <tr><td>4</td><td>UELEWA NA USHIRIKIANO</td><td>____</td></tr>
-        <tr><td>5</td><td>HESHIMA KWA WALIMU NA WANAFUNZI</td><td>____</td></tr>
-        <tr><td>6</td><td>KUTII NA KUFUATA MAAGIZO</td><td>____</td></tr>
-        <tr><td>7</td><td>USAFI BINAFSI</td><td>____</td></tr>
-        <tr><td>8</td><td>KUSHIRIKI SHUGHULI ZA UTAMADUNI</td><td>____</td></tr>
+        <tr><th>NO</th><th>MAELEZO</th><th>ALAMA</th><th>NO</th><th>MAELEZO</th><th>ALAMA</th></tr>
+        <tr><td>1</td><td>KUFANYA KAZI KWA BIDII</td><td>____</td><td>5</td><td>HESHIMA KWA WALIMU NA WANAFUNZI</td><td>____</td></tr>
+        <tr><td>2</td><td>KUPENDA KUHESHIMU NA KUTHAMINI KAZI</td><td>____</td><td>6</td><td>KUTII NA KUFUATA MAAGIZO</td><td>____</td></tr>
+        <tr><td>3</td><td>UANGALIFU WA MALI ZA UMA</td><td>____</td><td>7</td><td>USAFI BINAFSI</td><td>____</td></tr>
+        <tr><td>4</td><td>UELEWA NA USHIRIKIANO</td><td>____</td><td>8</td><td>KUSHIRIKI SHUGHULI ZA UTAMADUNI</td><td>____</td></tr>
     </table>
 
-    <div class="sec-title">MAONI YA SHULE</div>
+    <div class="sec-title">Maoni ya Shule</div>
     <div class="comment-box"><?= htmlspecialchars($comment) ?></div>
 
-    <div class="sec-title">UJUMBE KWA MZAZI / MLEZI</div>
-    <div class="comment-box" style="background:#fff6e5;padding:8px 10px;">
-        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:10px;font-weight:700;color:#7a5800;border-bottom:1px solid #f0d080;margin-bottom:6px;padding-bottom:5px;">
-            <span>📊 Pointi: <?= (int)($sum['total_points'] ?? $total_points) ?></span>
-            <span>📈 GPA: <?= number_format($gpa,2) ?></span>
-            <?php if($sum['division']): ?><span>🏅 Daraja: <?= htmlspecialchars($sum['division']) ?></span><?php endif; ?>
-            <span>🎯 Nafasi: <?= (int)$sum['position'] ?> / <?= (int)$total_students ?></span>
-            <span>📚 Wastani: <?= number_format($sum['average_marks'],1) ?>%</span>
+    <div class="sec-title">Ujumbe kwa Mzazi / Mlezi</div>
+    <div class="comment-box" style="background:#fff6e5;padding:6px 10px;">
+        <div class="msg-stats">
+            <span>Pointi: <?= (int)($sum['total_points'] ?? $total_points) ?></span>
+            <span>GPA: <?= number_format($gpa,2) ?></span>
+            <?php if($sum['division']): ?><span>Daraja: <?= htmlspecialchars($sum['division']) ?></span><?php endif; ?>
+            <span>Nafasi: <?= (int)$sum['position'] ?> / <?= (int)$total_students ?></span>
+            <span>Wastani: <?= number_format($sum['average_marks'],1) ?>%</span>
         </div>
-        <div style="font-size:11px;color:#5a4000;line-height:1.5;"><?= htmlspecialchars($parent_msg) ?></div>
+        <div style="font-size:10.5px;color:#5a4000;line-height:1.45;"><?= htmlspecialchars($parent_msg) ?></div>
     </div>
 
     <div class="sign-row">
@@ -202,10 +255,10 @@ th{background:#f0f0f0;font-size:12px;font-weight:700;}
         <div class="sign-item">_____________________<br><strong>MKUU WA SHULE</strong></div>
     </div>
 
-    <div class="footer-date">Ripoti hii imetolewa na Ofisi ya Taaluma | Tarehe: <?= date('d/m/Y') ?></div>
+    <div class="footer-date">Ripoti hii imetolewa na Ofisi ya Taaluma &nbsp;|&nbsp; Tarehe: <?= date('d/m/Y') ?></div>
 </div>
 
-<button onclick="window.print()" class="print-btn">🖨 PRINT / SAVE PDF</button>
+<button onclick="window.print()" class="print-btn">Chapisha / Hifadhi PDF</button>
 
 </body>
 </html>

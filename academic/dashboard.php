@@ -17,120 +17,16 @@ $active_year_name = $active_year['year_name'] ?? 'Not Set';
 $unread_messages  = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) c FROM messages WHERE status='unread'"))['c'] ?? 0;
 ?>
 <!DOCTYPE html>
-<html lang="sw">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Academic Dashboard · Kitukutu</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;overflow-x:hidden;}
-
-/* Sidebar – blue/academic theme */
-.sidebar{
-  position:fixed;top:0;left:-280px;width:280px;height:100%;
-  background:linear-gradient(180deg,#1e3a5f 0%,#0d2137 100%);
-  z-index:1050;transition:left .3s cubic-bezier(.4,0,.2,1);
-  padding:1.2rem .8rem;overflow-y:auto;box-shadow:4px 0 20px rgba(0,0,0,.15);
-}
-.sidebar.active{left:0;}
-.sidebar-header{padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:1rem;}
-.sidebar-header h4{color:#fff;font-weight:800;font-size:1.1rem;display:flex;align-items:center;gap:8px;}
-.sidebar-header small{color:#93c5fd;font-size:.7rem;display:block;margin-top:4px;}
-.role-chip{display:inline-block;background:rgba(59,130,246,.25);color:#93c5fd;border-radius:20px;padding:2px 10px;font-size:.68rem;font-weight:700;margin-top:4px;}
-
-.nav-single{margin-bottom:3px;}
-.nav-single>a,.nav-single>a:visited{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 12px;border-radius:12px;
-  color:#bfdbfe;text-decoration:none;font-size:.88rem;font-weight:500;transition:all .2s;
-}
-.nav-single>a i{font-size:1.1rem;width:22px;}
-.nav-single>a:hover{background:rgba(59,130,246,.15);color:#fff;transform:translateX(3px);}
-.nav-single>a.active{background:#3b82f6;color:#fff;font-weight:700;transform:none;}
-
-.nav-group{margin-bottom:3px;}
-.nav-grp-hdr{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 12px;border-radius:10px;
-  color:#93c5fd;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
-  cursor:pointer;user-select:none;transition:all .2s;
-}
-.nav-grp-hdr:hover{background:rgba(255,255,255,.06);color:#bfdbfe;}
-.nav-grp-hdr.open{color:#60a5fa;}
-.nav-grp-hdr .gleft{display:flex;align-items:center;gap:9px;}
-.nav-grp-hdr .gleft i{font-size:1rem;}
-.nav-grp-hdr .gchev{font-size:10px;transition:transform .2s;flex-shrink:0;}
-.nav-grp-hdr.open .gchev{transform:rotate(180deg);}
-.nav-sub{display:none;padding-left:8px;margin-top:2px;}
-.nav-sub.open{display:block;}
-.nav-sub li{margin-bottom:1px;list-style:none;}
-.nav-sub a,.nav-sub a:visited{
-  display:flex;align-items:center;gap:10px;
-  padding:8px 12px;border-radius:9px;
-  color:#93c5fd;text-decoration:none;font-size:.875rem;font-weight:500;transition:all .18s;
-}
-.nav-sub a i{font-size:1rem;width:20px;flex-shrink:0;}
-.nav-sub a:hover{background:rgba(59,130,246,.15);color:#fff;transform:translateX(3px);}
-.nav-sub a.active{background:#3b82f6;color:#fff;font-weight:600;transform:none;}
-
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1040;display:none;}
-.overlay.active{display:block;}
-
-.main-content{margin-left:0;padding:.8rem;transition:all .3s;}
-.topbar{
-  background:#fff;border-radius:18px;padding:.6rem 1rem;
-  margin-bottom:1rem;box-shadow:0 2px 8px rgba(0,0,0,.04);
-  border:1px solid #dbeafe;display:flex;align-items:center;gap:10px;
-}
-.menu-toggle{background:#3b82f6;border:none;padding:7px 12px;border-radius:10px;color:#fff;font-weight:700;display:flex;align-items:center;gap:6px;cursor:pointer;}
-.content-frame{width:100%;border:0;border-radius:18px;background:#fff;min-height:calc(100vh - 108px);box-shadow:0 2px 8px rgba(0,0,0,.03);}
-
-.top-welcome{flex:1;min-width:0;padding:0 4px;}
-.top-welcome .greeting{font-size:11px;color:#6b7280;}
-.top-welcome .wname{font-size:14px;font-weight:800;color:#1e3a5f;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.top-welcome .wdate{font-size:11px;color:#6b7280;margin-top:1px;}
-
-.topbar-actions{display:flex;align-items:center;gap:6px;}
-.notif-btn{
-  position:relative;background:#eff6ff;border:1px solid #bfdbfe;border-radius:50%;
-  width:36px;height:36px;display:flex;align-items:center;justify-content:center;
-  cursor:pointer;color:#1e3a5f;font-size:16px;text-decoration:none;transition:background .15s;
-}
-.notif-btn:hover{background:#dbeafe;color:#1e3a5f;}
-.notif-badge{position:absolute;top:-4px;right:-4px;background:#ef4444;color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;}
-
-.profile-wrap{position:relative;}
-.profile-btn{display:flex;align-items:center;gap:6px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:40px;padding:3px 10px 3px 3px;cursor:pointer;transition:background .15s;}
-.profile-btn:hover{background:#dbeafe;}
-.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:#fff;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;}
-.name-text{font-size:12px;font-weight:600;color:#111827;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.chevron{font-size:10px;color:#6b7280;transition:transform .2s;}
-.profile-btn.open .chevron{transform:rotate(180deg);}
-.profile-dropdown{display:none;position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid #dbeafe;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.12);min-width:200px;z-index:2000;overflow:hidden;}
-.profile-dropdown.open{display:block;}
-.pd-header{padding:12px 14px 10px;border-bottom:1px solid #eff6ff;font-size:11px;color:#6b7280;}
-.pd-header .pd-name{font-weight:700;font-size:13px;color:#111827;margin-bottom:2px;}
-.profile-dropdown a{display:flex;align-items:center;gap:10px;padding:10px 14px;font-size:13px;color:#111827;text-decoration:none;transition:background .12s;}
-.profile-dropdown a:hover{background:#eff6ff;}
-.profile-dropdown a i{font-size:16px;width:20px;}
-.pd-logout{color:#ef4444!important;border-top:1px solid #eff6ff;}
-.pd-logout i{color:#ef4444;}
-
-@media(min-width:992px){
-  .sidebar{left:0;}
-  .overlay{display:none!important;}
-  .main-content{margin-left:280px;padding:1rem 1.5rem;}
-  .menu-toggle{display:none;}
-  body{display:flex;align-items:stretch;}
-  .sidebar{position:fixed;}
-}
-@media(max-width:480px){.top-welcome .wdate{display:none;}}
-</style>
+<link href="../assets/css/shared.css" rel="stylesheet">
 </head>
-<body>
+<body class="theme-academic">
 
 <div class="overlay" id="overlay"></div>
 
@@ -185,15 +81,44 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
       </ul>
     </li>
 
-    <!-- Mawasiliano -->
+    <!-- Nyaraka za Kufundishia -->
     <li class="nav-group">
       <div class="nav-grp-hdr" onclick="toggleGroup(this)">
-        <span class="gleft"><i class="bi bi-megaphone-fill"></i> Mawasiliano</span>
+        <span class="gleft"><i class="bi bi-book-fill"></i> Nyaraka za Kufundishia</span>
         <i class="bi bi-chevron-down gchev"></i>
       </div>
       <ul class="nav-sub">
-        <li><a href="../admin/announcements.php" target="mainFrame"><i class="bi bi-megaphone"></i> Matangazo</a></li>
-        <li><a href="../admin/messages.php" target="mainFrame"><i class="bi bi-envelope"></i> Ujumbe
+        <li><a href="../admin/manage_curriculum.php" target="mainFrame"><i class="bi bi-book"></i> Mtaala</a></li>
+        <li><a href="../admin/manage_syllabus.php" target="mainFrame"><i class="bi bi-journal-text"></i> Silabasi</a></li>
+        <li><a href="../admin/manage_schemes.php" target="mainFrame"><i class="bi bi-calendar-week"></i> Mpangilio wa Mada</a></li>
+        <li><a href="../admin/manage_lesson_plans.php" target="mainFrame"><i class="bi bi-file-earmark-text"></i> Mipango ya Somo</a></li>
+        <li><a href="../admin/manage_subject_resources.php" target="mainFrame"><i class="bi bi-journal-richtext"></i> Vitabu & Maelezo</a></li>
+      </ul>
+    </li>
+
+    <!-- Calendar -->
+    <li class="nav-group">
+      <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+        <span class="gleft"><i class="bi bi-calendar3"></i> Calendar</span>
+        <i class="bi bi-chevron-down gchev"></i>
+      </div>
+      <ul class="nav-sub">
+        <li><a href="../admin/academic_years.php" target="mainFrame"><i class="bi bi-calendar-range"></i> Academic Years</a></li>
+        <li><a href="../admin/academic_terms.php" target="mainFrame"><i class="bi bi-layers"></i> Terms</a></li>
+        <li><a href="../admin/manage_events.php" target="mainFrame"><i class="bi bi-calendar-event"></i> Events</a></li>
+        <li><a href="../admin/academic_calendar.php" target="mainFrame"><i class="bi bi-calendar3"></i> Calendar View</a></li>
+      </ul>
+    </li>
+
+    <!-- Communication -->
+    <li class="nav-group">
+      <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+        <span class="gleft"><i class="bi bi-megaphone-fill"></i> Communication</span>
+        <i class="bi bi-chevron-down gchev"></i>
+      </div>
+      <ul class="nav-sub">
+        <li><a href="../admin/announcements.php" target="mainFrame"><i class="bi bi-megaphone"></i> Announcements</a></li>
+        <li><a href="../admin/messages.php" target="mainFrame"><i class="bi bi-envelope"></i> Messages
           <?php if($unread_messages>0): ?><span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?=$unread_messages?></span><?php endif;?>
         </a></li>
       </ul>
@@ -205,7 +130,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
 <div class="main-content">
   <div class="topbar">
     <button class="menu-toggle" id="menuBtn">☰ Menu</button>
-    <?php $hour=(int)date('H'); $greeting=$hour<12?'Habari za asubuhi':($hour<17?'Habari za mchana':'Habari za jioni'); ?>
+    <?php $hour=(int)date('H'); $greeting=$hour<12?'Good morning':($hour<17?'Good afternoon':'Good evening'); ?>
     <div class="top-welcome">
       <div class="greeting"><?=$greeting?>,</div>
       <div class="wname"><?=htmlspecialchars($admin_name)?></div>
@@ -232,6 +157,7 @@ body{background:#f4f7fc;font-family:system-ui,-apple-system,'Segoe UI',sans-seri
       </div>
     </div>
   </div>
+  <div class="breadcrumb-bar" id="breadcrumbBar"></div>
   <iframe title="Academic Content" class="content-frame" name="mainFrame" id="mainFrame" src="" loading="eager"></iframe>
 </div>
 
@@ -253,9 +179,21 @@ function openGroupForLink(link){
   if(sub){sub.classList.add('open');const hdr=sub.previousElementSibling;if(hdr)hdr.classList.add('open');}
 }
 const allLinks=document.querySelectorAll('.sidebar-nav a[target="mainFrame"]');
+function updateBreadcrumb(href){
+  var bar=document.getElementById('breadcrumbBar');
+  if(!bar)return;
+  var link=Array.from(allLinks).find(l=>l.getAttribute('href')===href);
+  if(!link){bar.innerHTML='';return;}
+  var pageText=link.textContent.trim().replace(/\s+/g,' ');
+  var sub=link.closest('.nav-sub');
+  var group=sub?sub.previousElementSibling.querySelector('.gleft'):null;
+  var groupText=group?group.textContent.trim():'Academic';
+  bar.innerHTML='<span>'+groupText+'</span><span class="bc-sep">›</span><span class="bc-page">'+pageText+'</span>';
+}
 function setActive(href){
   allLinks.forEach(l=>l.classList.remove('active'));
   allLinks.forEach(l=>{if(l.getAttribute('href')===href){l.classList.add('active');openGroupForLink(l);}});
+  updateBreadcrumb(href);
 }
 allLinks.forEach(link=>{
   link.addEventListener('click',function(){

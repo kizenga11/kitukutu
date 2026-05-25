@@ -33,12 +33,8 @@ if (!$conn) {
 //  SMS CONFIG
 // ============================================================
 define("SMS_USERNAME",  "kizenga");
-define("SMS_API_KEY",   "atsk_f2fc87e307be94d77b944f1fca9eb583e2f268d7d089195b5b01cde5c54fd4cc2549520f");
+define("SMS_API_KEY",   "atsk_26c261778f6c0deb889a5297a06656f86f5a6d0f3d86c36a8a57815b106d59ebd88ee06f");
 define("SMS_SENDER",    "AMALI12");
-
-// Beem.Africa (period reminder SMS via cron)
-define("BEEM_API_KEY",  "1b8769fe572c471c");
-define("BEEM_SECRET",   "Nzg3NDNiMDE3MTEyYzAwZWY2OTI4OTQyM2Q1YzlkOWM4ZDhmYWNiZjRmMDEyODYxMGE4NTFkN2I5NTBmZjVkZg==");
 
 // ============================================================
 //  ZOHO SMTP — Password reset emails

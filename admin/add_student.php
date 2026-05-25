@@ -17,10 +17,11 @@ if (isset($_POST['register_manual'])) {
     $second = mysqli_real_escape_string($conn, trim($_POST['second_name']));
     $last   = mysqli_real_escape_string($conn, trim($_POST['last_name']));
     $sex    = $_POST['sex'];
+    $form_level = $_POST['form_level'];
     $stream = $_POST['stream'];
     $phone  = mysqli_real_escape_string($conn, trim($_POST['parent_phone'] ?? ''));
 
-    if (mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,stream,parent_phone) VALUES('$first','$second','$last','$sex','$stream','$phone')")) {
+    if (mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream,parent_phone) VALUES('$first','$second','$last','$sex','$form_level','$stream','$phone')")) {
         $sid = mysqli_insert_id($conn);
         $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$stream') AND LOWER(category)='compulsory'");
         while ($s = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$s['id']}')");
@@ -41,10 +42,11 @@ if (isset($_POST['update_student'])) {
     $second = mysqli_real_escape_string($conn, trim($_POST['second_name']));
     $last   = mysqli_real_escape_string($conn, trim($_POST['last_name']));
     $sex    = $_POST['sex'];
+    $form_level = $_POST['form_level'];
     $stream = $_POST['stream'];
     $phone  = mysqli_real_escape_string($conn, trim($_POST['parent_phone']));
 
-    mysqli_query($conn,"UPDATE students SET first_name='$first',second_name='$second',last_name='$last',sex='$sex',stream='$stream',parent_phone='$phone' WHERE id='$id'");
+    mysqli_query($conn,"UPDATE students SET first_name='$first',second_name='$second',last_name='$last',sex='$sex',form_level='$form_level',stream='$stream',parent_phone='$phone' WHERE id='$id'");
     mysqli_query($conn,"DELETE FROM student_subjects WHERE student_id='$id'");
     $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$stream') AND LOWER(category)='compulsory'");
     while ($s = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$id','{$s['id']}')");
@@ -69,13 +71,15 @@ if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
     $file = fopen($_FILES['csv_file']['tmp_name'], 'r');
     $count = 0;
     while (($row = fgetcsv($file, 1000, ',')) !== false) {
-        if (count($row) < 5) continue;
+        if (count($row) < 6) continue;
         $f = mysqli_real_escape_string($conn, trim($row[0]));
         $s = mysqli_real_escape_string($conn, trim($row[1]));
         $l = mysqli_real_escape_string($conn, trim($row[2]));
         $sx = trim($row[3]);
-        $st = trim($row[4]);
-        if ($f && $l) { mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,stream) VALUES('$f','$s','$l','$sx','$st')"); $count++; }
+        $fl = trim($row[4]);
+        $st = trim($row[5]);
+        if (!in_array($fl, ['Form One','Form Two','Form Three','Form Four'])) $fl = 'Form One';
+        if ($f && $l) { mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream) VALUES('$f','$s','$l','$sx','$fl','$st')"); $count++; }
     }
     fclose($file);
     $_SESSION['flash'] = ['type'=>'success','msg'=>"CSV uploaded: $count students added."];
@@ -282,7 +286,7 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
               <input type="text" name="last_name" class="f-input" placeholder="Last name" required value="<?= htmlspecialchars($edit_data['last_name'] ?? '') ?>">
             </div>
           </div>
-          <div class="col-6">
+          <div class="col-4">
             <div class="f-group">
               <div class="f-label">Sex <span style="color:var(--danger)">*</span></div>
               <select name="sex" class="f-input" required>
@@ -292,7 +296,19 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
               </select>
             </div>
           </div>
-          <div class="col-6">
+          <div class="col-4">
+            <div class="f-group">
+              <div class="f-label">Form Level <span style="color:var(--danger)">*</span></div>
+              <select name="form_level" class="f-input" required>
+                <option value="">Select...</option>
+                <option value="Form One"   <?= ($edit_data['form_level']??'')==='Form One'   ? 'selected':'' ?>>Form One</option>
+                <option value="Form Two"   <?= ($edit_data['form_level']??'')==='Form Two'   ? 'selected':'' ?>>Form Two</option>
+                <option value="Form Three" <?= ($edit_data['form_level']??'')==='Form Three' ? 'selected':'' ?>>Form Three</option>
+                <option value="Form Four"  <?= ($edit_data['form_level']??'')==='Form Four'  ? 'selected':'' ?>>Form Four</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-4">
             <div class="f-group">
               <div class="f-label">Stream <span style="color:var(--danger)">*</span></div>
               <select name="stream" id="streamSelect" class="f-input" required>
@@ -330,7 +346,7 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
         </div>
         <div class="csv-hint">
           <i class="bi bi-info-circle me-1"></i>
-          Column order: <b>FirstName, SecondName, LastName, Sex, Stream</b>
+          Column order: <b>FirstName, SecondName, LastName, Sex, FormLevel, Stream</b>
         </div>
         <button type="submit" name="upload_csv" class="btn-primary-solid btn-success-solid" style="margin-top:10px;">
           <i class="bi bi-cloud-upload"></i> Upload CSV
@@ -367,13 +383,15 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
           $init = strtoupper(substr($row['first_name'],0,1).substr($row['last_name'],0,1));
           $is_voc = strtolower($row['stream']) === 'vocational';
           $av_bg  = $is_voc ? '#9d174d' : '#1e40af';
+          $form_label = str_replace('Form ', 'F. ', $row['form_level'] ?? '');
         ?>
-        <div class="stu-row" data-search="<?= strtolower(htmlspecialchars($name.' '.$row['sex'].' '.$row['stream'])) ?>">
+        <div class="stu-row" data-search="<?= strtolower(htmlspecialchars($name.' '.$row['sex'].' '.$row['stream'].' '.($row['form_level']??''))) ?>">
           <div class="stu-avatar" style="background:<?= $av_bg ?>"><?= $init ?></div>
           <div class="stu-name">
             <div class="sn"><?= htmlspecialchars($name) ?></div>
             <div class="sm"><?= htmlspecialchars($row['sex']) ?> &bull; <?= htmlspecialchars($row['parent_phone'] ?? '') ?></div>
           </div>
+          <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#ede9fe;color:#5b21b6;flex-shrink:0;"><?= $form_label ?></span>
           <span class="stream-pill <?= $is_voc ? 'stream-voc' : 'stream-gen' ?>"><?= htmlspecialchars($row['stream']) ?></span>
           <a href="?edit=<?= $row['id'] ?>" class="act-btn edt" title="Edit"><i class="bi bi-pencil"></i></a>
           <button class="act-btn del" title="Delete" onclick="confirmDel(<?= $row['id'] ?>, '<?= htmlspecialchars(addslashes($name)) ?>')"><i class="bi bi-trash"></i></button>
@@ -440,6 +458,6 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 <?php endif; ?>
 </script>
-
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

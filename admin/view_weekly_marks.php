@@ -25,6 +25,7 @@ WHERE m.exam_id='$test_id'
 <title>Weekly Test Marks</title>
 
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
 </head>
 
@@ -47,25 +48,23 @@ Back
 </tr>
 
 <?php
-
-$i=1;
-
-while($row=mysqli_fetch_assoc($query)){
-?>
+$i = 1;
+if (mysqli_num_rows($query) === 0): ?>
+<tr>
+  <td colspan="3" class="text-center py-5 text-muted">
+    <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+    No marks found for this test.
+  </td>
+</tr>
+<?php else: while($row = mysqli_fetch_assoc($query)): ?>
 
 <tr>
-
 <td><?= $i++ ?></td>
-
-<td>
-<?= $row['first_name']." ".$row['second_name']." ".$row['last_name'] ?>
-</td>
-
+<td><?= $row['first_name']." ".$row['second_name']." ".$row['last_name'] ?></td>
 <td><?= $row['marks'] ?></td>
-
 </tr>
 
-<?php } ?>
+<?php endwhile; endif; ?>
 
 </table>
 

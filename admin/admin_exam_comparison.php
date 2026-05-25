@@ -10,6 +10,7 @@ if(!isset($_SESSION['admin_id'])){
 $exam1 = isset($_GET['exam1']) ? (int)$_GET['exam1'] : 0;
 $exam2 = isset($_GET['exam2']) ? (int)$_GET['exam2'] : 0;
 $exam3 = isset($_GET['exam3']) ? (int)$_GET['exam3'] : 0;
+$form_level = isset($_GET['form_level']) ? mysqli_real_escape_string($conn, $_GET['form_level']) : '';
 
 $exam_list = [];
 $exams_q = mysqli_query($conn, "SELECT id, exam_name FROM exams ORDER BY start_date DESC");
@@ -23,6 +24,8 @@ foreach($exam_list as $e){
 
 $selected = array_filter([$exam1, $exam2, $exam3]);
 $selected_count = count($selected);
+
+$fl_filter_sql = $form_level ? " AND form_level = '$form_level'" : '';
 
 $school_name = "Kitukutu Technical School";
 ?>
@@ -132,7 +135,17 @@ select{width:100%;padding:7px 8px;border:1px solid #ccc;border-radius:6px;backgr
         </select>
     </div>
 </div>
-<div style="margin-top:10px;">
+<div style="margin-top:12px;display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+    <div style="min-width:150px;">
+        <label>Kidato (Form Level)</label>
+        <select name="form_level">
+            <option value="">-- All Forms --</option>
+            <option value="Form One" <?= $form_level==='Form One'?'selected':'' ?>>Form One</option>
+            <option value="Form Two" <?= $form_level==='Form Two'?'selected':'' ?>>Form Two</option>
+            <option value="Form Three" <?= $form_level==='Form Three'?'selected':'' ?>>Form Three</option>
+            <option value="Form Four" <?= $form_level==='Form Four'?'selected':'' ?>>Form Four</option>
+        </select>
+    </div>
     <button type="submit" class="btn btn-analyze">Analyze</button>
 </div>
 </form>
@@ -163,7 +176,7 @@ echo "</div>";
 $school_data = [];
 foreach($exam_ids as $eid){
     if(!$eid) continue;
-    $q = mysqli_query($conn, "SELECT AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid'");
+    $q = mysqli_query($conn, "SELECT AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid'$fl_filter_sql");
     $r = mysqli_fetch_assoc($q);
     $school_data[$eid] = round((float)($r['avg_mark'] ?? 0), 2);
 }
@@ -210,7 +223,7 @@ echo "</tr></table>";
 $subj_maps = [];
 foreach($exam_ids as $eid){
     if(!$eid) continue;
-    $q = mysqli_query($conn, "SELECT subject_id, AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid' GROUP BY subject_id");
+    $q = mysqli_query($conn, "SELECT subject_id, AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid'$fl_filter_sql GROUP BY subject_id");
     $map = [];
     while($r=mysqli_fetch_assoc($q)) $map[(int)$r['subject_id']] = round((float)$r['avg_mark'],2);
     $subj_maps[$eid] = $map;
@@ -279,13 +292,18 @@ echo "<div class='summary-box'><b>Subject Summary:</b> Improved: $subj_improved 
 $stud_maps = [];
 foreach($exam_ids as $eid){
     if(!$eid) continue;
-    $q = mysqli_query($conn, "SELECT student_id, AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid' GROUP BY student_id");
+    $q = mysqli_query($conn, "SELECT student_id, AVG(CASE WHEN marks='A' THEN NULL ELSE marks END) as avg_mark FROM marks WHERE exam_id='$eid'$fl_filter_sql GROUP BY student_id");
     $map = [];
     while($r=mysqli_fetch_assoc($q)) $map[(int)$r['student_id']] = round((float)$r['avg_mark'],2);
     $stud_maps[$eid] = $map;
 }
 
-$stud_q = mysqli_query($conn, "SELECT id, first_name, second_name, last_name FROM students ORDER BY first_name ASC, second_name ASC, last_name ASC");
+$stud_sql = "SELECT id, first_name, second_name, last_name FROM students";
+if ($form_level) {
+    $stud_sql .= " WHERE id IN (SELECT DISTINCT student_id FROM marks WHERE form_level = '$form_level')";
+}
+$stud_sql .= " ORDER BY first_name ASC, second_name ASC, last_name ASC";
+$stud_q = mysqli_query($conn, $stud_sql);
 
 $improved=0; $declined=0; $same=0;
 

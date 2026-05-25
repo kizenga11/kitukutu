@@ -121,5 +121,6 @@ if(isset($_POST['save_composition'])){
 <script>
 document.querySelectorAll('.alert-dismissible').forEach(function(a){setTimeout(function(){a.classList.remove('show');a.style.display='none';},5000);});
 </script>
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

@@ -38,6 +38,14 @@ VALUES ('$exam_id','$subject')");
 }
 }
 
+// Save form levels
+if(!empty($_POST['form_levels'])){
+    foreach($_POST['form_levels'] as $fl){
+        $fl = mysqli_real_escape_string($conn,$fl);
+        mysqli_query($conn,"INSERT INTO exam_form_levels (exam_id,form_level) VALUES ('$exam_id','$fl')");
+    }
+}
+
 $_SESSION['success']="Exam created successfully";
 header("Location: exam_management.php");
 exit();
@@ -62,6 +70,15 @@ if(isset($_POST['subjects'])){
 foreach($_POST['subjects'] as $subject){
 mysqli_query($conn,"INSERT INTO exam_subjects (exam_id,subject_id) VALUES ('$exam_id','$subject')");
 }
+}
+
+// Update form levels
+mysqli_query($conn,"DELETE FROM exam_form_levels WHERE exam_id='$exam_id'");
+if(!empty($_POST['form_levels'])){
+    foreach($_POST['form_levels'] as $fl){
+        $fl = mysqli_real_escape_string($conn,$fl);
+        mysqli_query($conn,"INSERT INTO exam_form_levels (exam_id,form_level) VALUES ('$exam_id','$fl')");
+    }
 }
 
 $_SESSION['success']="Exam updated successfully";
@@ -172,7 +189,16 @@ ORDER BY e.id DESC");
 while($row=mysqli_fetch_assoc($q)){
 ?>
 <tr>
-<td data-label="Exam"><?= $row['exam_name'] ?></td>
+<td data-label="Exam"><?= $row['exam_name'] ?>
+<?php
+$fl_q=mysqli_query($conn,"SELECT form_level FROM exam_form_levels WHERE exam_id='{$row['id']}'");
+if($fl_q && mysqli_num_rows($fl_q)>0){
+    $fls=[];
+    while($fl_r=mysqli_fetch_assoc($fl_q)) $fls[]=str_replace('Form ','F. ',$fl_r['form_level']);
+    echo '<div style="font-size:10px;color:#6b7280;margin-top:2px;">'.implode(', ',$fls).'</div>';
+}
+?>
+</td>
 <td data-label="Category"><?= $row['category_name'] ?></td>
 <td data-label="Year"><?= $row['year_name'] ?></td>
 <td data-label="Status">
@@ -229,6 +255,23 @@ echo "<option value='{$y['id']}' $sel>{$y['year_name']}</option>";
 </select>
 <input type="date" name="start_date" class="form-control form-control-sm mb-2" value="<?= $row['start_date'] ?>" style="border-radius:10px;">
 <input type="date" name="end_date" class="form-control form-control-sm mb-2" value="<?= $row['end_date'] ?>" style="border-radius:10px;">
+<label class="form-label small fw-semibold mt-1">Form Levels</label>
+<div class="mb-2">
+<?php
+$sel_fls=[];
+$fl_q=mysqli_query($conn,"SELECT form_level FROM exam_form_levels WHERE exam_id='{$row['id']}'");
+while($fl_r=mysqli_fetch_assoc($fl_q)){$sel_fls[]=$fl_r['form_level'];}
+$all_forms=['Form One','Form Two','Form Three','Form Four'];
+foreach($all_forms as $af){
+    $chk=in_array($af,$sel_fls)?'checked':'';
+    $id_af=str_replace(' ','_',$af);
+    echo "<div class='form-check form-check-inline'>
+        <input class='form-check-input' type='checkbox' name='form_levels[]' value='$af' id='e{$row['id']}_$id_af' $chk>
+        <label class='form-check-label' style='font-size:0.85rem;' for='e{$row['id']}_$id_af'>$af</label>
+    </div>";
+}
+?>
+</div>
 <label class="form-label small fw-semibold mt-1">Subjects</label>
 <div style="max-height:150px;overflow-y:auto;">
 <?php
@@ -290,6 +333,25 @@ echo "<option value='{$y['id']}'>{$y['year_name']}</option>";
 </select>
 <input type="date" name="start_date" class="form-control form-control-sm mb-2" style="border-radius:10px;">
 <input type="date" name="end_date" class="form-control form-control-sm mb-2" style="border-radius:10px;">
+<label class="form-label small fw-semibold mt-1">Form Levels</label>
+<div class="mb-2">
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" name="form_levels[]" value="Form One" id="cfl1">
+    <label class="form-check-label" style="font-size:0.85rem;" for="cfl1">Form One</label>
+  </div>
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" name="form_levels[]" value="Form Two" id="cfl2">
+    <label class="form-check-label" style="font-size:0.85rem;" for="cfl2">Form Two</label>
+  </div>
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" name="form_levels[]" value="Form Three" id="cfl3">
+    <label class="form-check-label" style="font-size:0.85rem;" for="cfl3">Form Three</label>
+  </div>
+  <div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" name="form_levels[]" value="Form Four" id="cfl4">
+    <label class="form-check-label" style="font-size:0.85rem;" for="cfl4">Form Four</label>
+  </div>
+</div>
 <label class="form-label small fw-semibold mt-1">Subjects</label>
 <div style="max-height:150px;overflow-y:auto;">
 <?php

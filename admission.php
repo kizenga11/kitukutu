@@ -341,6 +341,6 @@ this.value = this.value.toUpperCase();
 
 
 </script>
-
+<script src="assets/js/forms.js"></script>
 </body>
 </html>

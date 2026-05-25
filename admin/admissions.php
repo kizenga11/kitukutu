@@ -273,7 +273,14 @@ $result = mysqli_query($conn,"SELECT * FROM admissions ORDER BY id DESC");
                     </tr>
                 </thead>
                 <tbody>
-                    <?php mysqli_data_seek($result,0); while($row = mysqli_fetch_assoc($result)){ ?>
+                    <?php mysqli_data_seek($result, 0); if (mysqli_num_rows($result) === 0): ?>
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+                            No admission applications found.
+                        </td>
+                    </tr>
+                    <?php else: while($row = mysqli_fetch_assoc($result)): ?>
                     <tr>
                         <td data-label="App No"><?php echo htmlspecialchars($row['application_no']); ?></td>
                         <td data-label="Name"><?php echo htmlspecialchars($row['first_name']." ".$row['middle_name']." ".$row['last_name']); ?></td>
@@ -309,23 +316,32 @@ $result = mysqli_query($conn,"SELECT * FROM admissions ORDER BY id DESC");
                                 </div>
                             </form>
 
-                            <form action="delete_admission.php" method="POST" class="action-form mt-1"
-                                  onsubmit="return confirm('Are you sure you want to delete this application?');">
+                            <form action="delete_admission.php" method="POST"
+                                  class="action-form mt-1"
+                                  id="del-adm-<?php echo $row['id']; ?>">
                                 <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                                <button type="submit" class="btn-action btn-delete">
+                                <button type="button" class="btn-action btn-delete"
+                                  data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                                  data-delete-form="del-adm-<?php echo $row['id']; ?>"
+                                  data-delete-msg="Delete this application? This cannot be undone.">
                                     <i class="bi bi-trash"></i> Delete
                                 </button>
                             </form>
                         </td>
                     </tr>
-                    <?php } ?>
+                    <?php endwhile; endif; ?>
                 </tbody>
             </table>
         </div>
 
         <!-- MOBILE CARDS (visible only on mobile) -->
         <div class="mobile-cards">
-            <?php mysqli_data_seek($result,0); while($row = mysqli_fetch_assoc($result)){ ?>
+            <?php mysqli_data_seek($result, 0); if (mysqli_num_rows($result) === 0): ?>
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+                No admission applications found.
+            </div>
+            <?php else: while($row = mysqli_fetch_assoc($result)): ?>
             <div class="admission-card">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($row['application_no']); ?></h5>
@@ -363,19 +379,63 @@ $result = mysqli_query($conn,"SELECT * FROM admissions ORDER BY id DESC");
                 </form>
 
                 <form action="delete_admission.php" method="POST"
-                      onsubmit="return confirm('Are you sure you want to delete this application?');">
+                      id="del-adm-mob-<?php echo $row['id']; ?>">
                     <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
-                    <button type="submit" class="btn-action btn-delete w-100">
+                    <button type="button" class="btn-action btn-delete w-100"
+                      data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+                      data-delete-form="del-adm-mob-<?php echo $row['id']; ?>"
+                      data-delete-msg="Delete this application? This cannot be undone.">
                         <i class="bi bi-trash"></i> Delete
                     </button>
                 </form>
             </div>
-            <?php } ?>
+            <?php endwhile; endif; ?>
         </div>
     </div>
 </div>
 
-<!-- Bootstrap JS (optional, for any future enhancements) -->
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center pt-1 px-4">
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2.4rem;"></i>
+        <h6 class="fw-bold mt-2 mb-1">Confirm Delete</h6>
+        <p class="text-muted small mb-0" id="deleteConfirmMsg">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2 pt-2">
+        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm px-4" id="deleteConfirmBtn">
+          <i class="bi bi-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  var modal = document.getElementById('deleteConfirmModal');
+  var confirmBtn = document.getElementById('deleteConfirmBtn');
+  var pendingForm = null;
+
+  modal.addEventListener('show.bs.modal', function (e) {
+    var t = e.relatedTarget;
+    if (!t) return;
+    document.getElementById('deleteConfirmMsg').textContent =
+      t.getAttribute('data-delete-msg') || 'This action cannot be undone.';
+    pendingForm = document.getElementById(t.getAttribute('data-delete-form'));
+  });
+
+  confirmBtn.addEventListener('click', function () {
+    if (pendingForm) pendingForm.submit();
+    bootstrap.Modal.getInstance(modal).hide();
+  });
+})();
+</script>
 </body>
 </html>

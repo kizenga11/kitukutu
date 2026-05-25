@@ -88,6 +88,7 @@ function getGrade($mark){
 <title>Subject Analysis</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
 body{ background:#f4f6f9; }
 .school-header{
@@ -150,13 +151,17 @@ body{ background:#f4f6f9; }
 <th>Grade</th>
 </tr>
 
-<?php 
+<?php
 $position = 1;
-
-while($row = mysqli_fetch_assoc($results)){
-
+if (mysqli_num_rows($results) === 0): ?>
+<tr>
+  <td colspan="4" class="text-center py-5 text-muted">
+    <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+    No marks entered for this exam yet.
+  </td>
+</tr>
+<?php else: while($row = mysqli_fetch_assoc($results)):
     $grade = getGrade($row['marks']);
-
     $total_students++;
     $total_marks += $row['marks'];
     $grade_count[$grade]++;
@@ -169,7 +174,7 @@ while($row = mysqli_fetch_assoc($results)){
 <td><strong><?= $grade ?></strong></td>
 </tr>
 
-<?php } ?>
+<?php endwhile; endif; ?>
 
 </table>
 </div>

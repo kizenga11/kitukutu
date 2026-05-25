@@ -26,8 +26,8 @@ while($row = mysqli_fetch_assoc($query)){
 
     $message = "Reminder: You have $subject at $time.";
 
-    $api_key = "1b8769fe572c471c";
-    $secret = "Nzg3NDNiMDE3MTEyYzAwZWY2OTI4OTQyM2Q1YzlkOWM4ZDhmYWNiZjRmMDEyODYxMGE4NTFkN2I5NTBmZjVkZg==";
+    $api_key = BEEM_API_KEY;
+    $secret  = BEEM_SECRET;
 
     $data = [
         "source_addr" => "INFO",

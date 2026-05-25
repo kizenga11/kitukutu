@@ -440,15 +440,17 @@ if(isset($_GET['delete'])){
                     <div class="subjects-list">
                         <?php
                         $assign = mysqli_query($conn,"
-                            SELECT s.subject_name, t.stream, t.class_stream
+                            SELECT s.subject_name, t.form_level, t.stream, t.class_stream
                             FROM teacher_assignments t
                             JOIN subjects s ON t.subject_id = s.id
                             WHERE t.teacher_id='{$row['id']}'
+                            ORDER BY s.subject_name, t.form_level
                         ");
                         if(mysqli_num_rows($assign) > 0){
                             while($a = mysqli_fetch_assoc($assign)){
+                                $fl = str_replace('Form ','F. ',$a['form_level']??'F.1');
                                 echo "<span class='subject-badge'>".
-                                     htmlspecialchars($a['subject_name']." (".$a['stream']." ".$a['class_stream'].")").
+                                     htmlspecialchars($a['subject_name'].' ('.$fl.')').
                                      "</span>";
                             }
                         } else {

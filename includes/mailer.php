@@ -1,6 +1,6 @@
 <?php
 /**
- * Zoho SMTP mailer — thin wrapper around PHPMailer.
+ * Gmail SMTP mailer — thin wrapper around PHPMailer.
  * Credentials are defined as constants in includes/config.php.
  */
 
@@ -11,15 +11,16 @@ require_once __DIR__ . '/phpmailer/Exception.php';
 require_once __DIR__ . '/phpmailer/PHPMailer.php';
 require_once __DIR__ . '/phpmailer/SMTP.php';
 
-/**
- * Send an HTML email via Zoho SMTP.
- *
- * @param  string $toEmail   Recipient address
- * @param  string $toName    Recipient display name
- * @param  string $subject
- * @param  string $htmlBody  Full HTML content
- * @return bool              true on success
- */
+if (!defined('ZOHO_FROM_EMAIL')) {
+    define('ZOHO_FROM_EMAIL', getenv('ZOHO_FROM_EMAIL') ?: 'kizengagodlove5@gmail.com');
+}
+if (!defined('ZOHO_FROM_NAME')) {
+    define('ZOHO_FROM_NAME', getenv('ZOHO_FROM_NAME') ?: 'Kitukutu School System');
+}
+if (!defined('ZOHO_SMTP_PASS')) {
+    define('ZOHO_SMTP_PASS', getenv('ZOHO_SMTP_PASS') ?: 'phpojppssedahydx');
+}
+
 function sendMailZoho(string $toEmail, string $toName, string $subject, string $htmlBody): bool
 {
     $mail = new PHPMailer(true);

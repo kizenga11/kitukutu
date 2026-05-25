@@ -60,11 +60,19 @@ if(isset($_POST['register'])){
 
                         $teacher_id = mysqli_insert_id($conn);
 
+                        // Get active year & term
+                        $yr = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM academic_years WHERE is_active=1 LIMIT 1"));
+                        $tm = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM terms WHERE is_active=1 LIMIT 1"));
+                        $yid = intval($yr['id']??0); $tid = intval($tm['id']??0);
+
                         if(isset($_POST['assignments'])){
 
-                            foreach($_POST['assignments'] as $subject_id){
+                            foreach($_POST['assignments'] as $val){
+                                $parts = explode('|', $val);
+                                $sid = intval($parts[0]);
+                                $fl = $parts[1] ?? 'Form One';
 
-                                $sub = mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$subject_id'");
+                                $sub = mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$sid'");
                                 $sub_data = mysqli_fetch_assoc($sub);
 
                                 $stream = $sub_data['stream'];
@@ -72,10 +80,14 @@ if(isset($_POST['register'])){
 
                                 mysqli_query($conn,"
                                     INSERT INTO teacher_assignments
-                                    (teacher_id, subject_id, stream, class_stream)
+                                    (teacher_id, subject_id, form_level, stream, class_stream)
                                     VALUES
-                                    ('$teacher_id','$subject_id','$stream','$class_stream')
+                                    ('$teacher_id','$sid','$fl','$stream','$class_stream')
                                 ");
+                                // Auto-create subject_settings
+                                if ($yid && $tid) {
+                                    mysqli_query($conn,"INSERT IGNORE INTO subject_settings (teacher_id,subject_id,form_level,academic_year_id,term_id,is_active) VALUES ($teacher_id,$sid,'$fl',$yid,$tid,1)");
+                                }
                             }
                         }
 
@@ -727,16 +739,24 @@ if(isset($_POST['register'])){
 
                     <div class="subjects-grid">
                         <?php
+                        $forms = ['Form One','Form Two','Form Three','Form Four'];
+                        $short = ['F.1','F.2','F.3','F.4'];
                         $subjects = mysqli_query($conn,"SELECT * FROM subjects ORDER BY stream, subject_name");
                         while($row = mysqli_fetch_assoc($subjects)){
                         ?>
-                        <div class="subject-card" onclick="document.getElementById('sub_<?= $row['id'] ?>').click();">
-                            <input class="form-check-input" type="checkbox" name="assignments[]"
-                                   value="<?= $row['id'] ?>" id="sub_<?= $row['id'] ?>">
-                            <label for="sub_<?= $row['id'] ?>">
-                                <span><?= $row['subject_name'] ?></span>
-                                <span class="badge-stream"><?= $row['stream'] ?></span>
-                            </label>
+                        <div class="subject-card" style="flex-direction:column;align-items:stretch;">
+                            <div style="display:flex;align-items:center;gap:8px;width:100%;">
+                                <span style="font-weight:600;flex:1;font-size:0.9rem;"><?= $row['subject_name'] ?></span>
+                                <span class="badge-stream" style="flex-shrink:0;"><?= $row['stream'] ?></span>
+                            </div>
+                            <div style="display:flex;gap:4px;margin-top:6px;">
+                                <?php for ($fi=0;$fi<4;$fi++): ?>
+                                <label style="display:flex;align-items:center;gap:3px;font-size:11px;padding:3px 6px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;background:#f9fafb;">
+                                    <input type="checkbox" name="assignments[]" value="<?=$row['id'].'|'.$forms[$fi]?>" style="width:12px;height:12px;margin:0;cursor:pointer;">
+                                    <?=$short[$fi]?>
+                                </label>
+                                <?php endfor; ?>
+                            </div>
                         </div>
                         <?php } ?>
                     </div>
@@ -782,5 +802,6 @@ function togglePassword(id){
 <script>
 document.querySelectorAll('.alert-app').forEach(function(a){setTimeout(function(){a.style.display='none';},5000);});
 </script>
+<script src="../assets/js/forms.js"></script>
 </body>
 </html>

@@ -8,6 +8,8 @@ if(!isset($_SESSION['admin_id'])){
 }
 
 $exam_id = $_GET['exam_id'] ?? '';
+$form_level_filter = $_GET['form_level'] ?? '';
+$flFilterSql = $form_level_filter ? " AND st.form_level='$form_level_filter'" : '';
 
 if(!$exam_id){
     die("Exam not selected.");
@@ -24,11 +26,11 @@ $summary_json = isset($exam['summary_json']) && $exam['summary_json'] ? json_dec
 =================================*/
 $results = mysqli_query($conn,"
 SELECT ers.*, 
-st.stream,
+st.stream, st.form_level,
 CONCAT(st.first_name,' ',st.second_name,' ',st.last_name) AS full_name
 FROM exam_results_summary ers
 JOIN students st ON ers.student_id=st.id
-WHERE ers.exam_id='$exam_id'
+WHERE ers.exam_id='$exam_id' $flFilterSql
 ORDER BY ers.position ASC
 ");
 
@@ -47,6 +49,7 @@ function schoolGrade($avg){
 <title>Overall School Merit</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
 body{background:#f4f6f9;}
 .school-header{text-align:center;}
@@ -78,6 +81,17 @@ body{background:#fff!important;font-size:11px;}
 <p><strong><?= $exam['exam_name'] ?></strong></p>
 <p>OVERALL SCHOOL MERIT LIST</p>
 <p>Date Printed: <?= date("d M Y") ?></p>
+<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:8px;">
+    <a href="?exam_id=<?= $exam_id ?>&form_level=" class="btn btn-sm <?= !$form_level_filter?'btn-primary':'btn-outline-primary' ?>" style="text-decoration:none;border-radius:6px;font-size:12px;">All Forms</a>
+    <?php
+    $fl_q = mysqli_query($conn,"SELECT form_level FROM exam_form_levels WHERE exam_id='$exam_id'");
+    if ($fl_q) while ($fl_r = mysqli_fetch_assoc($fl_q)):
+        $fl_short = str_replace('Form ','F. ',$fl_r['form_level']);
+        $active = $form_level_filter === $fl_r['form_level'] ? 'btn-primary' : 'btn-outline-primary';
+    ?>
+    <a href="?exam_id=<?= $exam_id ?>&form_level=<?= urlencode($fl_r['form_level']) ?>" class="btn btn-sm <?= $active ?>" style="text-decoration:none;border-radius:6px;font-size:12px;"><?= $fl_short ?></a>
+    <?php endwhile; ?>
+</div>
 <hr>
 </div>
 
@@ -87,6 +101,7 @@ body{background:#fff!important;font-size:11px;}
 <tr class="table-dark">
 <th>Pos</th>
 <th>Name</th>
+<?php if(!$form_level_filter): ?><th>Form</th><?php endif; ?>
 <th>Stream</th>
 <th>Total</th>
 <th>Average</th>
@@ -95,14 +110,21 @@ body{background:#fff!important;font-size:11px;}
 <th>Division</th>
 </tr>
 
-<?php
-while($row=mysqli_fetch_assoc($results)):
+<?php if (mysqli_num_rows($results) === 0): ?>
+<tr>
+  <td colspan="8" class="text-center py-5 text-muted">
+    <i class="bi bi-inbox" style="font-size:2.2rem;display:block;margin-bottom:8px;opacity:.25;"></i>
+    No results processed for this exam yet.
+  </td>
+</tr>
+<?php else: while($row=mysqli_fetch_assoc($results)):
 $div_display = $row['division'] ?: '-';
 ?>
 
 <tr>
 <td><?= (int)$row['position'] ?></td>
 <td><?= $row['full_name'] ?></td>
+<?php if(!$form_level_filter): ?><td><?= str_replace('Form ','F. ',htmlspecialchars($row['form_level']??'')) ?></td><?php endif; ?>
 <td><?= $row['stream'] ?></td>
 <td><?= (int)$row['total_marks'] ?></td>
 <td><?= number_format((float)$row['average_marks'],2) ?></td>
@@ -111,7 +133,7 @@ $div_display = $row['division'] ?: '-';
 <td><?= $div_display ?></td>
 </tr>
 
-<?php endwhile; ?>
+<?php endwhile; endif; ?>
 
 </table>
 </div>
@@ -125,18 +147,18 @@ if($summary_json && isset($summary_json['school'])){
     $divisions = $summary_json['divisions'] ?? [];
 } else {
     // fallback: compute on the fly
-    $divQ = mysqli_query($conn,"SELECT division,COUNT(*) as c FROM exam_results_summary WHERE exam_id='$exam_id' GROUP BY division");
+    $divQ = mysqli_query($conn,"SELECT ers.division,COUNT(*) as c FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql GROUP BY ers.division");
     $divisions = [];
     while($d=mysqli_fetch_assoc($divQ)) $divisions[$d['division']] = ['total'=>(int)$d['c']];
 
-    $sumQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total,AVG(average_marks) as avg FROM exam_results_summary WHERE exam_id='$exam_id'"));
+    $sumQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total,AVG(ers.average_marks) as avg FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql"));
     $total_students = (int)$sumQ['total'];
     $school_avg = $sumQ['avg'] ? round((float)$sumQ['avg'],2) : 0;
     $school_grade = schoolGrade($school_avg);
 }
 
 // Grade distribution from stored averages
-$gradQ = mysqli_query($conn,"SELECT average_marks FROM exam_results_summary WHERE exam_id='$exam_id'");
+$gradQ = mysqli_query($conn,"SELECT ers.average_marks FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql");
 $gradeCounts = ['A'=>0,'B'=>0,'C'=>0,'D'=>0,'F'=>0];
 while($gr=mysqli_fetch_assoc($gradQ)){
     $g = schoolGrade($gr['average_marks']);

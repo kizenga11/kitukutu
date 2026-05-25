@@ -11,6 +11,26 @@ $term = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id, term_name FROM terms 
 $year_id = intval($year['id'] ?? 0);
 $term_id = intval($term['id'] ?? 0);
 
+// ── Auto-create subject_settings from teacher_assignments ──
+$asgn_q = mysqli_query($conn, "
+    SELECT DISTINCT ta.subject_id, ta.form_level
+    FROM teacher_assignments ta
+    WHERE ta.teacher_id = $teacher_id
+");
+while ($a = mysqli_fetch_assoc($asgn_q)) {
+    $chk = mysqli_query($conn, "
+        SELECT id FROM subject_settings
+        WHERE teacher_id=$teacher_id AND subject_id='{$a['subject_id']}'
+          AND form_level='{$a['form_level']}' AND academic_year_id=$year_id AND term_id=$term_id
+    ");
+    if (mysqli_num_rows($chk) == 0) {
+        mysqli_query($conn, "
+            INSERT IGNORE INTO subject_settings (teacher_id, subject_id, form_level, academic_year_id, term_id, is_active)
+            VALUES ($teacher_id, '{$a['subject_id']}', '{$a['form_level']}', $year_id, $term_id, 1)
+        ");
+    }
+}
+
 // AJAX: save topic
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
@@ -125,7 +145,7 @@ if (isset($_GET['get_topics'])) {
 
 // Load teacher's subject assignments for active year/term
 $subjects_query = mysqli_query($conn,"
-    SELECT ss.id AS ss_id, ss.subject_id, sub.subject_name, sub.stream,
+    SELECT ss.id AS ss_id, ss.subject_id, ss.form_level, sub.subject_name, sub.stream,
            (SELECT COUNT(*) FROM topics t WHERE t.subject_setting_id=ss.id) AS total_topics,
            (SELECT COUNT(*) FROM topics t WHERE t.subject_setting_id=ss.id AND t.teaching_status='Taught') AS taught_topics,
            (SELECT COUNT(*) FROM topics t WHERE t.subject_setting_id=ss.id AND t.teaching_status='In Progress') AS inprog_topics
@@ -133,7 +153,7 @@ $subjects_query = mysqli_query($conn,"
     JOIN subjects sub ON sub.id=ss.subject_id
     WHERE ss.teacher_id=$teacher_id AND ss.academic_year_id=$year_id AND ss.term_id=$term_id AND ss.is_active=1
     GROUP BY ss.id
-    ORDER BY sub.subject_name
+    ORDER BY sub.subject_name, ss.form_level
 ");
 $subjects = [];
 while ($r = mysqli_fetch_assoc($subjects_query)) $subjects[] = $r;
@@ -201,10 +221,11 @@ body{background:#f3f4f6;font-family:system-ui;padding:12px;}
       $taught = intval($s['taught_topics']);
       $pct    = $total > 0 ? round($taught/$total*100) : 0;
       $col    = $pct >= 80 ? '#10b981' : ($pct >= 40 ? '#f59e0b' : '#ef4444');
+      $fl     = str_replace('Form ','F. ',$s['form_level']??'F.1');
     ?>
-    <div class="sub-card" data-ssid="<?= $s['ss_id'] ?>" data-name="<?= htmlspecialchars($s['subject_name']) ?>" onclick="loadTopics(this)">
+    <div class="sub-card" data-ssid="<?= $s['ss_id'] ?>" data-name="<?= htmlspecialchars($s['subject_name'].' ('.$fl.')') ?>" onclick="loadTopics(this)">
       <div class="d-flex justify-content-between align-items-start">
-        <div class="fw-semibold" style="font-size:13px"><?= htmlspecialchars($s['subject_name']) ?></div>
+        <div class="fw-semibold" style="font-size:13px"><?= htmlspecialchars($s['subject_name']) ?> <span style="font-size:10px;color:#6b7280;font-weight:400;"><?=$fl?></span></div>
         <span class="pct-pill"><?= $pct ?>%</span>
       </div>
       <div class="text-muted" style="font-size:11px"><?= $s['stream'] ?></div>
@@ -237,6 +258,28 @@ body{background:#f3f4f6;font-family:system-ui;padding:12px;}
 </div>
 
 <?php endif; ?>
+
+<!-- Delete Confirm Modal -->
+<div class="modal fade" id="delConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center pt-1 px-4">
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2.4rem;"></i>
+        <h6 class="fw-bold mt-2 mb-1">Confirm Delete</h6>
+        <p class="text-muted small mb-0" id="delConfirmMsg">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2 pt-2">
+        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm px-4" id="delConfirmBtn">
+          <i class="bi bi-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Topic Modal -->
 <div class="modal fade" id="topicModal" tabindex="-1">
@@ -306,6 +349,18 @@ body{background:#f3f4f6;font-family:system-ui;padding:12px;}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 let activeSsId = 0, activeName = '', topicModal;
+
+// ── Delete confirm modal utility ──
+let _delConfirmCb = null;
+function showDelConfirm(msg, callback) {
+  document.getElementById('delConfirmMsg').textContent = msg;
+  _delConfirmCb = callback;
+  new bootstrap.Modal(document.getElementById('delConfirmModal')).show();
+}
+document.getElementById('delConfirmBtn').addEventListener('click', function () {
+  bootstrap.Modal.getInstance(document.getElementById('delConfirmModal')).hide();
+  if (_delConfirmCb) { _delConfirmCb(); _delConfirmCb = null; }
+});
 const isMobile = () => window.innerWidth < 768;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -422,10 +477,11 @@ function deleteComp(btn) {
   const row = btn.closest('.comp-entry');
   const cid = row.dataset.cid;
   if (!cid || cid === '0') { row.remove(); return; }
-  if (!confirm('Delete this competency?')) return;
-  fetch('', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: `action=delete_competency&comp_id=${cid}`})
-    .then(r => r.json()).then(d => { if (d.ok) row.remove(); });
+  showDelConfirm('Delete this competency? This cannot be undone.', function () {
+    fetch('', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: `action=delete_competency&comp_id=${cid}`})
+      .then(r => r.json()).then(d => { if (d.ok) row.remove(); });
+  });
 }
 
 function autoFillPct() {
@@ -465,13 +521,14 @@ function saveTopic() {
 }
 
 function deleteTopic() {
-  if (!confirm('Delete this topic and all its competencies?')) return;
-  const tid = document.getElementById('mTopicId').value;
-  fetch('', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body: `action=delete_topic&topic_id=${tid}`})
-    .then(r => r.json()).then(d => {
-      if (d.ok) { topicModal.hide(); const el = document.querySelector(`.sub-card[data-ssid="${activeSsId}"]`); if(el) loadTopics(el); location.reload(); }
-    });
+  showDelConfirm('Delete this topic and all its competencies? This cannot be undone.', function () {
+    const tid = document.getElementById('mTopicId').value;
+    fetch('', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body: `action=delete_topic&topic_id=${tid}`})
+      .then(r => r.json()).then(d => {
+        if (d.ok) { topicModal.hide(); const el = document.querySelector(`.sub-card[data-ssid="${activeSsId}"]`); if(el) loadTopics(el); location.reload(); }
+      });
+  });
 }
 </script>
 </body>

@@ -16,6 +16,8 @@ $result = mysqli_query($conn,"SELECT * FROM announcements ORDER BY id DESC");
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Announcements</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
 <style>
 
@@ -264,12 +266,15 @@ Draft
 
 <!-- DELETE FORM -->
 <form action="delete_announcement.php" method="POST"
-onsubmit="return confirm('Delete this item?');"
+id="del-ann-<?php echo $row['id']; ?>"
 style="margin-top:10px;">
 
 <input type="hidden" name="id" value="<?php echo $row['id']; ?>">
 
-<button class="delete">Delete</button>
+<button type="button" class="delete"
+  data-bs-toggle="modal" data-bs-target="#deleteConfirmModal"
+  data-delete-form="del-ann-<?php echo $row['id']; ?>"
+  data-delete-msg="Delete this announcement? This cannot be undone.">Delete</button>
 
 </form>
 
@@ -286,6 +291,50 @@ setTimeout(function(){
     let alertBox = document.getElementById('autoAlert');
     if(alertBox){ alertBox.style.display = "none"; }
 },5000);
+</script>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header border-0 pb-0">
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center pt-1 px-4">
+        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:2.4rem;"></i>
+        <h6 class="fw-bold mt-2 mb-1">Confirm Delete</h6>
+        <p class="text-muted small mb-0" id="deleteConfirmMsg">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center gap-2 pt-2">
+        <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger btn-sm px-4" id="deleteConfirmBtn">
+          <i class="bi bi-trash me-1"></i>Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+  var modal = document.getElementById('deleteConfirmModal');
+  var confirmBtn = document.getElementById('deleteConfirmBtn');
+  var pendingForm = null;
+
+  modal.addEventListener('show.bs.modal', function (e) {
+    var t = e.relatedTarget;
+    if (!t) return;
+    document.getElementById('deleteConfirmMsg').textContent =
+      t.getAttribute('data-delete-msg') || 'This action cannot be undone.';
+    pendingForm = document.getElementById(t.getAttribute('data-delete-form'));
+  });
+
+  confirmBtn.addEventListener('click', function () {
+    if (pendingForm) pendingForm.submit();
+    bootstrap.Modal.getInstance(modal).hide();
+  });
+})();
 </script>
 
 </body>

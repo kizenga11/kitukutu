@@ -21,7 +21,20 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
       "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\kitukutu\\\\admin\" -Filter \"*.php\")",
-      "Bash(Select-Object -ExpandProperty Name)"
+      "Bash(Select-Object -ExpandProperty Name)",
+      "Bash(Get-ChildItem -Path \"C:\\\\xampp\\\\htdocs\\\\kitukutu\\\\admin\" -Recurse -Filter \"*.php\")",
+      "Bash(Select-String -Path \"C:/xampp/htdocs/kitukutu/login.php\" -Pattern \"</body>\" -n)",
+      "Bash(Select-Object -First 3)",
+      "Bash(php -l C:/xampp/htdocs/kitukutu/admin/send_results_sms.php)",
+      "Bash(php -l C:/xampp/htdocs/kitukutu/admin/mark_entry.php)",
+      "Bash(php -l C:/xampp/htdocs/kitukutu/admin/compose_exam.php)",
+      "Bash(php -l C:/xampp/htdocs/kitukutu/admin/add_teacher.php)",
+      "Bash(php -l C:/xampp/htdocs/kitukutu/admin/add_student.php)",
+      "PowerShell(& \"C:/xampp/php/php.exe\" -r \"echo extension_loaded\\('openssl'\\) ? 'openssl: yes' : 'openssl: NO'; echo PHP_EOL; echo phpversion\\(\\);\")",
+      "Bash(mysql -u root --password=\"\" kitukutu_db -e \"SELECT id, exam_name FROM exams ORDER BY id DESC LIMIT 5;\")",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root --password=\"\" kitukutu_db -e \"SELECT id, exam_name FROM exams ORDER BY id DESC LIMIT 5; SELECT id, first_name, last_name, form_level FROM students LIMIT 5; SELECT DISTINCT exam_id, student_id, form_level FROM exam_results_summary LIMIT 5;\" 2>$null)",
+      "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root --password=\"\" kitukutu_db -e \"SELECT DISTINCT ers.exam_id, ers.student_id, ers.form_level, e.exam_name FROM exam_results_summary ers JOIN exams e ON e.id=ers.exam_id ORDER BY ers.exam_id DESC LIMIT 5;\" 2>$null)",
+      "PowerShell(Start-Process \"http://localhost/kitukutu/admin/student_report.php?exam_id=24&student_id=43\")"
     ]
   }
 }

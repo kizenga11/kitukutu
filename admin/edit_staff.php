@@ -61,13 +61,25 @@ if (isset($_POST['update']) && !$error) {
 }
 
 function saveAssignmentsEdit($conn, $uid) {
+    // Get active year & term
+    $yr = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM academic_years WHERE is_active=1 LIMIT 1"));
+    $tm = mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM terms WHERE is_active=1 LIMIT 1"));
+    $yid = intval($yr['id']??0); $tid = intval($tm['id']??0);
     mysqli_query($conn,"DELETE FROM teacher_assignments WHERE teacher_id='$uid'");
+    // Also clean up orphaned subject_settings
+    mysqli_query($conn,"DELETE FROM subject_settings WHERE teacher_id='$uid'");
     if (!empty($_POST['assignments'])) {
-        foreach ($_POST['assignments'] as $sid) {
-            $sid = intval($sid);
+        foreach ($_POST['assignments'] as $val) {
+            $parts = explode('|', $val);
+            $sid = intval($parts[0]);
+            $fl = $parts[1] ?? 'Form One';
             $sub = mysqli_fetch_assoc(mysqli_query($conn,"SELECT stream FROM subjects WHERE id='$sid'"));
             $stream = $sub['stream']; $cs = $stream === 'GENERAL' ? 'B' : 'A';
-            mysqli_query($conn,"INSERT IGNORE INTO teacher_assignments (teacher_id,subject_id,stream,class_stream) VALUES ('$uid','$sid','$stream','$cs')");
+            mysqli_query($conn,"INSERT IGNORE INTO teacher_assignments (teacher_id,subject_id,form_level,stream,class_stream) VALUES ('$uid','$sid','$fl','$stream','$cs')");
+            // Auto-create subject_settings entry
+            if ($yid && $tid) {
+                mysqli_query($conn,"INSERT IGNORE INTO subject_settings (teacher_id,subject_id,form_level,academic_year_id,term_id,is_active) VALUES ($uid,$sid,'$fl',$yid,$tid,1)");
+            }
         }
     }
 }
@@ -78,8 +90,8 @@ if ($sq) while ($r = mysqli_fetch_assoc($sq)) $subjects_list[] = $r;
 
 $current_assignments = [];
 if ($row) {
-    $ar = mysqli_query($conn,"SELECT subject_id FROM teacher_assignments WHERE teacher_id='{$row['id']}'");
-    if ($ar) while ($r = mysqli_fetch_assoc($ar)) $current_assignments[] = $r['subject_id'];
+    $ar = mysqli_query($conn,"SELECT subject_id, form_level FROM teacher_assignments WHERE teacher_id='{$row['id']}'");
+    if ($ar) while ($r = mysqli_fetch_assoc($ar)) $current_assignments[] = $r['subject_id'].'|'.$r['form_level'];
 }
 
 $back_link = 'manage_staff.php';
@@ -177,18 +189,28 @@ body{background:#fff;font-family:system-ui;padding:16px;color:#111827;}
       </div>
 
       <div style="margin-bottom:14px;">
-        <label class="f-label" style="margin-bottom:6px;">Subject Assignments</label>
+        <label class="f-label" style="margin-bottom:6px;">Subject Assignments <span style="font-weight:400;color:#6b7280;">(tick subject + form level(s))</span></label>
         <div class="subj-grid">
           <?php foreach($subjects_list as $s):
-            $checked = in_array($s['id'], $current_assignments) ? 'checked' : '';
             $sc = $s['stream']==='GENERAL' ? 's-gen' : 's-voc';
             $sl = $s['stream']==='GENERAL' ? 'General' : 'Voc';
           ?>
-          <label class="subj-item">
-            <input type="checkbox" name="assignments[]" value="<?=$s['id']?>" <?=$checked?>>
-            <span><?=htmlspecialchars($s['subject_name'])?></span>
-            <span class="subj-stream <?=$sc?>"><?=$sl?></span>
-          </label>
+          <div class="subj-item" style="flex-wrap:wrap;gap:3px;padding:6px 8px;">
+            <div style="display:flex;align-items:center;gap:6px;width:100%;">
+              <span style="font-weight:600;flex:1;"><?=htmlspecialchars($s['subject_name'])?></span>
+              <span class="subj-stream <?=$sc?>"><?=$sl?></span>
+            </div>
+            <div style="display:flex;gap:2px;margin-top:2px;">
+              <?php $forms = ['Form One','Form Two','Form Three','Form Four']; $short = ['F.1','F.2','F.3','F.4']; for ($fi=0;$fi<4;$fi++):
+                $checked = in_array($s['id'].'|'.$forms[$fi], $current_assignments) ? 'checked' : '';
+              ?>
+              <label style="display:flex;align-items:center;gap:2px;font-size:10px;padding:2px 4px;border:1px solid #e5e7eb;border-radius:4px;cursor:pointer;">
+                <input type="checkbox" name="assignments[]" value="<?=$s['id'].'|'.$forms[$fi]?>" <?=$checked?> style="width:11px;height:11px;margin:0;cursor:pointer;">
+                <?=$short[$fi]?>
+              </label>
+              <?php endfor; ?>
+            </div>
+          </div>
           <?php endforeach; ?>
         </div>
       </div>
