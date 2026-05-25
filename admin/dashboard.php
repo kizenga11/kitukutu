@@ -78,6 +78,7 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
                 <li><a href="manage_staff.php" target="mainFrame"><i class="bi bi-person-badge-fill"></i> Manage Staff</a></li>
                 <li><a href="add_teacher.php" target="mainFrame"><i class="bi bi-person-badge"></i> Add Teacher</a></li>
                 <li><a href="add_student.php" target="mainFrame"><i class="bi bi-people"></i> Students</a></li>
+                <li><a href="manage_student_subjects.php" target="mainFrame"><i class="bi bi-journal-bookmark-fill"></i> Student Subjects</a></li>
                 <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Admissions</a></li>
             </ul>
         </li>

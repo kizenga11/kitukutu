@@ -321,7 +321,7 @@ inputs.forEach((inp, idx) => {
         styleInput(this);
         checkChanged(this);
         updateProgress();
-        if ((v.length >= 2 && v !== 'A') || v === 'A') {
+        if ((v.length >= 2 && v !== 'A' && v !== '10') || v === 'A' || v.length >= 3) {
             const next = inputs[idx + 1];
             if (next) { next.focus(); next.select(); }
         }
