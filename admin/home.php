@@ -20,6 +20,9 @@ $total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as tot
 $form_counts = [];
 $fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students GROUP BY form_level ORDER BY form_level");
 if ($fc_q) while ($fc_r = mysqli_fetch_assoc($fc_q)) $form_counts[$fc_r['form_level']] = $fc_r['total'];
+$stream_counts = [];
+$sc_q = mysqli_query($conn, "SELECT stream, COUNT(*) as total FROM students GROUP BY stream");
+if ($sc_q) while ($sc_r = mysqli_fetch_assoc($sc_q)) $stream_counts[$sc_r['stream']] = $sc_r['total'];
 $total_teachers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM teachers"))['total'] ?? 0;
 $total_exams = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM exams"))['total'] ?? 0;
 $total_announcements = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM announcements WHERE status='published'"))['total'] ?? 0;
@@ -75,6 +78,23 @@ $recent_announcements = mysqli_query($conn, "SELECT title, type, created_at FROM
     <span style="width:10px;height:10px;border-radius:50%;background:<?= $color ?>;flex-shrink:0;"></span>
     <span style="font-weight:700;font-size:14px;"><?= (int)$cnt ?></span>
     <span style="font-size:12px;color:#6b7280;"><?= str_replace('Form ','F. ',$fl) ?></span>
+  </div>
+  <?php endforeach; ?>
+</div>
+<?php endif; ?>
+
+<!-- Stream Breakdown -->
+<?php if (!empty($stream_counts)): ?>
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+  <?php
+  $stream_colors = ['General'=>'#3b82f6','Vocational'=>'#ec4899'];
+  foreach ($stream_counts as $st => $cnt):
+    $color = $stream_colors[$st] ?? '#6b7280';
+  ?>
+  <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:6px 12px;">
+    <span style="width:10px;height:10px;border-radius:50%;background:<?= $color ?>;flex-shrink:0;"></span>
+    <span style="font-weight:700;font-size:14px;"><?= (int)$cnt ?></span>
+    <span style="font-size:12px;color:#6b7280;"><?= htmlspecialchars($st) ?></span>
   </div>
   <?php endforeach; ?>
 </div>

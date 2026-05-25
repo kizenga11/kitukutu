@@ -66,6 +66,17 @@ if (isset($_GET['delete'])) {
     header("Location: add_student.php"); exit();
 }
 
+/* ── Auto-fix: assign compulsory subjects to students missing them ── */
+$fixed = 0;
+$missing = mysqli_query($conn,"SELECT s.id, s.stream FROM students s LEFT JOIN student_subjects ss ON ss.student_id = s.id WHERE ss.student_id IS NULL");
+while ($m = mysqli_fetch_assoc($missing)) {
+    $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('{$m['stream']}') AND LOWER(category)='compulsory'");
+    while ($c = mysqli_fetch_assoc($comp)) {
+        mysqli_query($conn,"INSERT IGNORE INTO student_subjects(student_id,subject_id) VALUES('{$m['id']}','{$c['id']}')");
+    }
+    $fixed++;
+}
+
 /* ── CSV Upload ── */
 if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
     $file = fopen($_FILES['csv_file']['tmp_name'], 'r');
@@ -79,7 +90,13 @@ if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
         $fl = trim($row[4]);
         $st = trim($row[5]);
         if (!in_array($fl, ['Form One','Form Two','Form Three','Form Four'])) $fl = 'Form One';
-        if ($f && $l) { mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream) VALUES('$f','$s','$l','$sx','$fl','$st')"); $count++; }
+        if ($f && $l) {
+            mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream) VALUES('$f','$s','$l','$sx','$fl','$st')");
+            $sid = mysqli_insert_id($conn);
+            $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$st') AND LOWER(category)='compulsory'");
+            while ($srow = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$srow['id']}')");
+            $count++;
+        }
     }
     fclose($file);
     $_SESSION['flash'] = ['type'=>'success','msg'=>"CSV uploaded: $count students added."];
@@ -93,6 +110,10 @@ while ($r = mysqli_fetch_assoc($students_q)) $students[] = $r;
 $total = count($students);
 
 $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
+if ($fixed > 0 && !$flash) {
+    $_SESSION['flash'] = ['type'=>'success','msg'=>"$fixed student(s) walikosa masomo ya lazima — wamepiwa sasa."];
+    $flash = $_SESSION['flash']; unset($_SESSION['flash']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
