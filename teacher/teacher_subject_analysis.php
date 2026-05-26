@@ -90,11 +90,11 @@ $total_f = array_sum(array_column($grades_dist, 'F'));
 
 /* Grade colours */
 $grade_cfg = [
-    'A' => ['bg'=>'#d1fae5','col'=>'#065f46','bar'=>'#10b981'],
-    'B' => ['bg'=>'#dbeafe','col'=>'#1e40af','bar'=>'#3b82f6'],
-    'C' => ['bg'=>'#fef3c7','col'=>'#92400e','bar'=>'#f59e0b'],
-    'D' => ['bg'=>'#fed7aa','col'=>'#9a3412','bar'=>'#f97316'],
-    'F' => ['bg'=>'#fee2e2','col'=>'#991b1b','bar'=>'#ef4444'],
+    'A' => ['bg'=>'#d1fae5','col'=>'#065f46'],
+    'B' => ['bg'=>'#dbeafe','col'=>'#1e40af'],
+    'C' => ['bg'=>'#fef3c7','col'=>'#92400e'],
+    'D' => ['bg'=>'#fed7aa','col'=>'#9a3412'],
+    'F' => ['bg'=>'#fee2e2','col'=>'#991b1b'],
 ];
 ?>
 <!DOCTYPE html>
@@ -164,9 +164,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
 .grade-card .g-letter{font-size:22px;font-weight:800;line-height:1;}
 .grade-card .g-count{font-size:18px;font-weight:700;margin-top:4px;}
 .grade-card .g-pct{font-size:11px;margin-top:2px;opacity:.8;}
-.grade-card .g-bar{height:4px;border-radius:4px;background:rgba(0,0,0,.1);overflow:hidden;margin-top:6px;}
-.grade-card .g-fill{height:100%;border-radius:4px;}
-.gender-row{display:flex;justify-content:center;gap:8px;margin-top:4px;font-size:10px;font-weight:700;}
 
 /* Section header */
 .sec-hdr{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
@@ -182,9 +179,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
 .sex-dot{font-size:10px;color:var(--muted);}
 .mark-num{font-size:16px;font-weight:800;min-width:36px;text-align:right;}
 .grade-pill{font-size:12px;font-weight:800;padding:3px 10px;border-radius:20px;min-width:32px;text-align:center;}
-.mini-bar-wrap{width:70px;flex-shrink:0;}
-.mini-bar{height:5px;border-radius:4px;background:var(--border);overflow:hidden;}
-.mini-fill{height:100%;border-radius:4px;}
 
 /* Empty */
 .empty{text-align:center;padding:50px 16px;color:var(--muted);}
@@ -195,7 +189,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
   body{background:#fff;}
   .content{padding:0;max-width:100%;}
   .stu-row{border-radius:0;border-left:none;border-right:none;border-top:none;padding:6px 0;}
-  .mini-bar-wrap{display:none;}
 }
 @media(max-width:640px){
   .content{padding:10px;}
@@ -204,8 +197,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
   .grade-card{padding:8px 5px;}
   .grade-card .g-letter{font-size:18px;}
   .grade-card .g-count{font-size:15px;}
-  .mini-bar-wrap{display:none;}
-  .gender-row{display:none;}
 }
 </style>
 </head>
@@ -298,11 +289,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
       <div class="g-letter"><?= $g ?></div>
       <div class="g-count"><?= $total_g ?></div>
       <div class="g-pct"><?= $pct_g ?>%</div>
-      <div class="g-bar"><div class="g-fill" style="width:<?= $pct_g ?>%;background:<?= $cfg['bar'] ?>"></div></div>
-      <div class="gender-row">
-        <span>M:<?= $grades_dist[$g]['M'] ?></span>
-        <span>F:<?= $grades_dist[$g]['F'] ?></span>
-      </div>
     </div>
     <?php endforeach; ?>
   </div>
@@ -333,11 +319,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
     <div class="stu-name">
       <?= htmlspecialchars($d['name']) ?>
       <div class="sex-dot"><?= $d['sex'] === 'F' ? 'Female' : 'Male' ?><?= !$form_level && isset($d['form_level']) ? ' · '.str_replace('Form ','F. ',$d['form_level']) : '' ?></div>
-    </div>
-    <div class="mini-bar-wrap">
-      <div class="mini-bar">
-        <div class="mini-fill" style="width:<?= $d['mark'] ?>%;background:<?= $col ?>"></div>
-      </div>
     </div>
     <div class="mark-num" style="color:<?= $col ?>"><?= $d['mark'] ?></div>
     <div class="grade-pill" style="background:<?= $cfg['bg'] ?>;color:<?= $cfg['col'] ?>"><?= $d['g'] ?></div>

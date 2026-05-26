@@ -208,8 +208,6 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
 .marks-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .mark-block .mark-lbl{font-size:10px;color:var(--muted);margin-bottom:3px;}
 .mark-block .mark-val{font-size:16px;font-weight:800;margin-bottom:4px;}
-.mini-bar{height:5px;border-radius:4px;background:var(--border);overflow:hidden;}
-.mini-fill{height:100%;border-radius:4px;transition:width .4s;}
 
 .diff-pill{
   display:inline-flex;align-items:center;gap:3px;
@@ -362,16 +360,10 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
       <div class="mark-block">
         <div class="mark-lbl"><?= htmlspecialchars($prev_name) ?></div>
         <div class="mark-val" style="color:<?= $c1 ?>"><?= $d['m1'] !== null ? $d['m1'] : '—' ?></div>
-        <div class="mini-bar">
-          <div class="mini-fill" style="width:<?= $d['m1'] !== null ? $d['m1'] : 0 ?>%;background:<?= $c1 ?>"></div>
-        </div>
       </div>
       <div class="mark-block">
         <div class="mark-lbl"><?= htmlspecialchars($curr_name) ?></div>
         <div class="mark-val" style="color:<?= $c2 ?>"><?= $d['m2'] !== null ? $d['m2'] : '—' ?></div>
-        <div class="mini-bar">
-          <div class="mini-fill" style="width:<?= $d['m2'] !== null ? $d['m2'] : 0 ?>%;background:<?= $c2 ?>"></div>
-        </div>
       </div>
     </div>
   </div>

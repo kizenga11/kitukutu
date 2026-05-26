@@ -81,47 +81,37 @@ function getGrade($mark){
 
 <!DOCTYPE html>
 <html>
-<head
-      
-      
-      >
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Subject Analysis</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
-body{ background:#f4f6f9; }
-.school-header{
-    text-align:center;
-    margin-bottom:20px;
+body{background:#f4f6f9;font-family:system-ui,-apple-system,sans-serif;}
+.school-header{text-align:center;margin-bottom:16px;}
+.school-header h4{color:#d90429;font-weight:bold;font-size:15px;margin:0 0 4px;}
+.school-header p{margin:0;font-size:12px;color:#555;}
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}
+.sum-card{background:#fff;border-radius:10px;padding:12px 8px;text-align:center;border:1px solid #e5e7eb;}
+.sum-card .val{font-size:20px;font-weight:800;line-height:1.1;}
+.sum-card .lbl{font-size:10px;color:#6b7280;margin-top:3px;text-transform:uppercase;letter-spacing:.3px;}
+.grade-dist{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0;}
+.grade-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+.grade-badge .g-letter{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;}
+table{font-size:12px;}
+.table th{background:#1a1a2e;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;}
+.table td{vertical-align:middle;}
+.btn-back{background:#6c757d;color:#fff;padding:6px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:6px;}
+.btn-back:hover{background:#5a6268;color:#fff;}
+@media(max-width:600px){
+  .summary-grid{grid-template-columns:repeat(2,1fr);}
+  .school-header h4{font-size:13px;}
 }
-.school-header h4{
-    color:#d90429;
-    font-weight:bold;
-}
-@media(max-width:768px){
-    table{ font-size:13px; }
-}
-   
 @media print {
-
-    body {
-        background:white !important;
-    }
-
-    .btn,
-    .no-print {
-        display:none !important;
-    }
-
-    .card {
-        box-shadow:none !important;
-        border:none !important;
-    }
-
-    hr {
-        border:1px solid black;
-    }
+  body{background:white!important;}
+  .btn,.no-print{display:none!important;}
+  .card{box-shadow:none!important;border:none!important;}
 }
 </style>
 </head>
@@ -183,70 +173,25 @@ if (mysqli_num_rows($results) === 0): ?>
 $average = $total_students > 0 ? round($total_marks/$total_students,2) : 0;
 ?>
 
-<hr>
+<h5 class="mt-3 mb-2" style="font-size:13px;font-weight:700;">Summary</h5>
 
-<h5>Summary</h5>
-
-<div class="row text-center">
-
-<div class="col-md-2 col-6 mb-2">
-<div class="card bg-success text-white">
-<div class="card-body">
-A<br><?= $grade_count['A'] ?>
-</div>
-</div>
-</div>
-
-<div class="col-md-2 col-6 mb-2">
-<div class="card bg-primary text-white">
-<div class="card-body">
-B<br><?= $grade_count['B'] ?>
-</div>
-</div>
-</div>
-
-<div class="col-md-2 col-6 mb-2">
-<div class="card bg-warning text-dark">
-<div class="card-body">
-C<br><?= $grade_count['C'] ?>
-</div>
-</div>
-</div>
-
-<div class="col-md-2 col-6 mb-2">
-<div class="card bg-secondary text-white">
-<div class="card-body">
-D<br><?= $grade_count['D'] ?>
-</div>
-</div>
-</div>
-
-<div class="col-md-2 col-6 mb-2">
-<div class="card bg-danger text-white">
-<div class="card-body">
-F<br><?= $grade_count['F'] ?>
-</div>
-</div>
-</div>
-
-<div class="col-md-2 col-12 mb-2">
-<div class="card bg-dark text-white">
-<div class="card-body">
-Average<br><?= $average ?>
-</div>
-</div>
-</div>
-
+<div class="grade-dist">
+<span class="grade-badge" style="background:#d1fae5;color:#065f46;"><span class="g-letter" style="background:#10b981;">A</span><?= $grade_count['A'] ?></span>
+<span class="grade-badge" style="background:#dbeafe;color:#1e40af;"><span class="g-letter" style="background:#3b82f6;">B</span><?= $grade_count['B'] ?></span>
+<span class="grade-badge" style="background:#fef3c7;color:#92400e;"><span class="g-letter" style="background:#f59e0b;">C</span><?= $grade_count['C'] ?></span>
+<span class="grade-badge" style="background:#fed7aa;color:#9a3412;"><span class="g-letter" style="background:#f97316;">D</span><?= $grade_count['D'] ?></span>
+<span class="grade-badge" style="background:#fee2e2;color:#991b1b;"><span class="g-letter" style="background:#ef4444;">F</span><?= $grade_count['F'] ?></span>
+<span class="grade-badge" style="background:#1a1a2e;color:#fff;"><span class="g-letter" style="background:#374151;">AVG</span><?= $average ?></span>
 </div>
 
     
-<div class="mt-3 d-flex justify-content-between">
+<div class="mt-3 d-flex justify-content-between no-print">
 
 <button onclick="window.print()" class="btn btn-primary btn-sm">
 <i class="bi bi-printer"></i> Print
 </button>
 
-<a href="dashboard.php" class="btn btn-secondary btn-sm no-print">
+<a href="dashboard.php" class="btn btn-secondary btn-sm">
 Back
 </a>
 
