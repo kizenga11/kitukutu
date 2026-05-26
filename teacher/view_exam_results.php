@@ -60,6 +60,8 @@ tr:nth-child(even){background:#f8f9fa;}
             <td data-label="Status"><span class="status-p">Processed</span></td>
             <td data-label="">
                 <a href="view_results.php?exam_id=<?= $e['id'] ?>" class="btn btn-pr">View</a>
+                <a href="stream_results.php?exam_id=<?= $e['id'] ?>&stream=General" class="btn btn-sm" style="background:#17a2b8;color:#fff;padding:4px 8px;font-size:10px;">Gen</a>
+                <a href="stream_results.php?exam_id=<?= $e['id'] ?>&stream=Vocational" class="btn btn-sm" style="background:#6f42c1;color:#fff;padding:4px 8px;font-size:10px;">Voc</a>
             </td>
         </tr>
         <?php endwhile; ?>

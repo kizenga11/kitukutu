@@ -73,6 +73,8 @@ tr:nth-child(even){background:#f8f9fa;}
             <td data-label="Actions" style="white-space:nowrap;">
                 <button class="btn btn-gr btn-sm" onclick="confirmAction('process','<?= $exam_id ?>','<?= htmlspecialchars($e['exam_name'],ENT_QUOTES) ?>')">Process</button>
                 <a href="view_results.php?exam_id=<?= $exam_id ?>" class="btn btn-pr btn-sm">View</a>
+                <a href="stream_results.php?exam_id=<?= $exam_id ?>&stream=General" class="btn btn-sm" style="background:#17a2b8;color:#fff;">Gen</a>
+                <a href="stream_results.php?exam_id=<?= $exam_id ?>&stream=Vocational" class="btn btn-sm" style="background:#6f42c1;color:#fff;">Voc</a>
                 <?php if($processed){ ?>
                 <button class="btn btn-dr btn-sm" onclick="confirmAction('reprocess','<?= $exam_id ?>','<?= htmlspecialchars($e['exam_name'],ENT_QUOTES) ?>')">Reprocess</button>
                 <?php } ?>

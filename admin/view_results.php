@@ -329,6 +329,18 @@ body{
             <?php endwhile; ?>
         </span>
         <?php endif; ?>
+        <?php
+        $streams = [];
+        $st_q = mysqli_query($conn,"SELECT DISTINCT s.stream FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id'");
+        if ($st_q) while($st_r=mysqli_fetch_assoc($st_q)) $streams[] = $st_r['stream'];
+        if (!empty($streams)):
+        ?>
+        <span style="display:flex;gap:3px;margin-left:6px;padding-left:6px;border-left:1px solid rgba(255,255,255,0.2);">
+            <?php foreach($streams as $st): ?>
+            <a href="stream_results.php?exam_id=<?= $exam_id ?>&stream=<?= urlencode($st) ?>" class="btn btn-light" style="font-size:11px;"><?= htmlspecialchars($st) ?></a>
+            <?php endforeach; ?>
+        </span>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -532,12 +544,12 @@ $schoolInfo = $summary_json['school'] ?? null;
 
 <!-- SUBJECT PERFORMANCE SUMMARY (live query, all streams) -->
 <?php
-function competencyLabel($gpa){
-    if($gpa >= 1 && $gpa <= 2) return 'Excellent';
-    if($gpa >= 2.01 && $gpa <= 3) return 'Very Good';
-    if($gpa >= 3.01 && $gpa <= 4) return 'Good';
-    if($gpa >= 4.01 && $gpa <= 5) return 'Fail';
-    return '-';
+function competencyLabel($avg){
+    if($avg >= 75) return 'Excellent';
+    if($avg >= 65) return 'Very Good';
+    if($avg >= 45) return 'Good';
+    if($avg >= 30) return 'Fair';
+    return 'Fail';
 }
 
 $sg_q_a = mysqli_query($conn, "
@@ -634,7 +646,7 @@ unset($sg);
                 <td><?= (int)$sg['sat'] ?></td>
                 <td><?= (int)$sg['pass_count'] ?></td>
                 <td style="font-weight:700;"><?= number_format((float)$sg['gpa'],2) ?></td>
-                <td style="font-size:11px;"><?= competencyLabel($sg['gpa']) ?></td>
+                <td style="font-size:11px;"><?= competencyLabel($sg['avg_mark']) ?></td>
             </tr>
             <?php endforeach; ?>
         </table>
