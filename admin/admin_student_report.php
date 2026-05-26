@@ -13,7 +13,7 @@ if (empty($_grade_scales)) {
         ['grade_letter'=>'B','min_marks'=>65,'points'=>2,'remark'=>'VIZURI SANA'],
         ['grade_letter'=>'C','min_marks'=>45,'points'=>3,'remark'=>'WASTANI'],
         ['grade_letter'=>'D','min_marks'=>30,'points'=>4,'remark'=>'HAFIFU'],
-        ['grade_letter'=>'F','min_marks'=>0, 'points'=>5,'remark'=>'KUSHINDWA'],
+        ['grade_letter'=>'F','min_marks'=>0, 'points'=>5,'remark'=>'FELI'],
     ];
 }
 
@@ -142,13 +142,14 @@ if ($has_summary) {
         SELECT DISTINCT m.student_id, s.first_name, s.second_name, s.last_name, s.sex, s.stream
         FROM marks m
         JOIN students s ON s.id = m.student_id
+        JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
         WHERE m.exam_id = $exam_id $marks_fl_sql
     ");
     if (!$mark_students || mysqli_num_rows($mark_students) == 0) die("No results found for this exam.");
     $student_rows = [];
     while ($ms = mysqli_fetch_assoc($mark_students)) {
         $inner_fl_sql = $has_fl_marks ? " AND form_level = '$form_level_filter'" : '';
-        $m_q = mysqli_query($conn, "SELECT marks FROM marks WHERE exam_id = $exam_id AND student_id = {$ms['student_id']} $inner_fl_sql");
+        $m_q = mysqli_query($conn, "SELECT m.marks FROM marks m JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id WHERE m.exam_id = $exam_id AND m.student_id = {$ms['student_id']} $inner_fl_sql");
         $total_marks = 0; $subject_count = 0; $all_pts_r = [];
         while ($mv = mysqli_fetch_assoc($m_q)) {
             $mk = (float)$mv['marks']; $total_marks += $mk; $subject_count++;
@@ -371,6 +372,7 @@ if ($has_summary) {
         $subs = mysqli_query($conn, "
             SELECT sub.subject_name, m.marks
             FROM marks m JOIN subjects sub ON sub.id = m.subject_id
+            JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
             WHERE m.exam_id = $exam_id AND m.student_id = $student_id AND m.form_level = '$form_level_filter'
             ORDER BY sub.subject_name
         ");
@@ -401,16 +403,16 @@ if ($has_summary) {
         elseif ($avg >= 30) $comment = 'Ufaulu wa chini. Mzazi ashirikiane na shule ili kumsaidia mwanafunzi.';
         else $comment = 'Ufaulu hafifu. Mzazi anashauriwa kufika shuleni kwa mazungumzo ya kina.';
 
-        $parent_msg = trim($exam['parent_message'] ?? '');
-        if (empty($parent_msg)) $parent_msg = trim($sum['parent_message'] ?? '');
-        if (empty($parent_msg)) {
-            $parent_msg = "Mzazi mpendwa wa $full_name, matokeo ya '{$exam['exam_name']}' yamehitimishwa. Amepata wastani wa " . number_format($avg, 2) . "% nafasi ya {$sum['position']} kati ya wanafunzi $total_students. ";
-            if ($avg >= 75) $parent_msg .= 'Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.';
-            elseif ($avg >= 65) $parent_msg .= 'Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.';
-            elseif ($avg >= 45) $parent_msg .= 'Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.';
-            elseif ($avg >= 30) $parent_msg .= 'Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.';
-            else $parent_msg .= 'Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.';
-        }
+        // Always auto-generate based on the selected exam's actual data
+        $parent_msg = "Mzazi mpendwa wa $full_name, matokeo ya '{$exam['exam_name']}' yamehitimishwa. Amepata wastani wa " . number_format($avg, 2) . "% nafasi ya {$sum['position']} kati ya wanafunzi $total_students. ";
+        if ($avg >= 75) $parent_msg .= 'Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.';
+        elseif ($avg >= 65) $parent_msg .= 'Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.';
+        elseif ($avg >= 45) $parent_msg .= 'Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.';
+        elseif ($avg >= 30) $parent_msg .= 'Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.';
+        else $parent_msg .= 'Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.';
+        // Append admin's custom note (if set) as additional info — never replace the auto-generated part
+        $custom_note = trim($exam['parent_message'] ?? '');
+        if (!empty($custom_note)) $parent_msg .= ' ' . $custom_note;
 
         $students_data[] = [
             'full_name' => $full_name, 'sex' => $sum['sex'], 'stream' => $sum['stream'],

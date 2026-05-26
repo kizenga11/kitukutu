@@ -25,6 +25,7 @@ $subs = mysqli_query($conn, "
     SELECT sub.subject_name, m.marks
     FROM marks m
     JOIN subjects sub ON sub.id = m.subject_id
+    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
     WHERE m.exam_id = $exam_id AND m.student_id = $student_id
     ORDER BY sub.subject_name
 ");
@@ -77,26 +78,27 @@ if ($avg >= 75) {
     $comment = "Ufaulu hafifu. Mzazi anashauriwa kufika shuleni kwa mazungumzo ya kina.";
 }
 
-$parent_msg = trim($exam['parent_message'] ?? '');
-if (empty($parent_msg)) {
-    $parent_msg = trim($sum['parent_message'] ?? '');
-}
-if (empty($parent_msg)) {
-    $student_name = $stu['first_name'] . " " . $stu['second_name'] . " " . $stu['last_name'];
-    $avg_marks = number_format($sum['average_marks'], 2);
-    $division = $sum['division'];
-    $position = $sum['position'];
+// Always auto-generate based on the selected exam's actual data
+$student_name = $stu['first_name'] . " " . $stu['second_name'] . " " . $stu['last_name'];
+$avg_marks = number_format($sum['average_marks'], 2);
+$division = $sum['division'];
+$position = $sum['position'];
 
-    $parent_msg = "Mzazi mpendwa wa {$student_name}, matokeo ya '{$exam['exam_name']}' yamehitimishwa. ";
-    $parent_msg .= "Amepata wastani wa {$avg_marks}% ";
-    if ($division) $parent_msg .= "na daraja la {$division}, ";
-    $parent_msg .= "nafasi ya {$position} kati ya wanafunzi {$total_students}. ";
+$parent_msg = "Mzazi mpendwa wa {$student_name}, matokeo ya '{$exam['exam_name']}' yamehitimishwa. ";
+$parent_msg .= "Amepata wastani wa {$avg_marks}% ";
+if ($division) $parent_msg .= "na daraja la {$division}, ";
+$parent_msg .= "nafasi ya {$position} kati ya wanafunzi {$total_students}. ";
 
-    if ($avg >= 75)      $parent_msg .= "Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.";
-    elseif ($avg >= 65)  $parent_msg .= "Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.";
-    elseif ($avg >= 45)  $parent_msg .= "Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.";
-    elseif ($avg >= 30)  $parent_msg .= "Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.";
-    else                 $parent_msg .= "Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.";
+if ($avg >= 75)      $parent_msg .= "Hongera kwa matokeo bora. Endelea kumhimiza mwanafunzi kudumisha ukakamali huu.";
+elseif ($avg >= 65)  $parent_msg .= "Matokeo mazuri. Msaidie mwanafunzi kuongeza muda wa kusoma nyumbani.";
+elseif ($avg >= 45)  $parent_msg .= "Matokeo ya wastani. Hakikisha anafanya kazi za nyumbani na kujisomea zaidi.";
+elseif ($avg >= 30)  $parent_msg .= "Matokeo dhaifu. Tafadhali wasiliana na mwalimu wa darasa ili kujua changamoto.";
+else                 $parent_msg .= "Matokeo duni sana. Inashauriwa kufika shuleni kwa ushauri na kufuatilia maendeleo.";
+
+// Append admin's custom note (if set) as additional info — never replace the auto-generated part
+$custom_note = trim($exam['parent_message'] ?? '');
+if (!empty($custom_note)) {
+    $parent_msg .= " " . $custom_note;
 }
 ?>
 <!DOCTYPE html>

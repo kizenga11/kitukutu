@@ -52,14 +52,14 @@ $all_school_totals = 0;
 $all_school_sum = 0;
 
 foreach ($form_levels as $form_level) {
-    // Get students for this form level (use m.form_level, fallback to s.form_level for old data)
-    $students = mysqli_query($conn,"SELECT DISTINCT m.student_id FROM marks m JOIN students s ON s.id=m.student_id WHERE m.exam_id='$exam_id' AND COALESCE(m.form_level, s.form_level)='$form_level'");
+    // Get students for this form level (use student's current form_level)
+    $students = mysqli_query($conn,"SELECT DISTINCT m.student_id FROM marks m JOIN students s ON s.id=m.student_id JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id WHERE m.exam_id='$exam_id' AND s.form_level='$form_level'");
     if (!$students) continue;
 
     $data=[];
     while($st=mysqli_fetch_assoc($students)){
         $id = $st['student_id'];
-        $q = mysqli_query($conn,"SELECT marks,subject_id FROM marks WHERE student_id='$id' AND exam_id='$exam_id'");
+        $q = mysqli_query($conn,"SELECT marks,subject_id FROM marks WHERE student_id='$id' AND exam_id='$exam_id' AND subject_id IN (SELECT subject_id FROM student_subjects WHERE student_id='$id')");
         if(!$q) continue;
 
         $total=0; $count=0; $pts=[];
@@ -101,6 +101,7 @@ foreach ($form_levels as $form_level) {
         $prev_avg=$d['avg'];
         $i++;
     }
+    unset($d);
 
     // Save to exam_results_summary
     foreach($data as $d){
@@ -146,7 +147,7 @@ foreach ($all_div_data as $d) {
 // Grade counts & average per subject (merged across forms)
 $subjGrades = [];
 $subjQ = mysqli_query($conn,"SELECT m.subject_id,sbj.short_name,m.marks
-FROM marks m JOIN subjects sbj ON sbj.id=m.subject_id WHERE m.exam_id='$exam_id' AND m.marks!='A'");
+FROM marks m JOIN subjects sbj ON sbj.id=m.subject_id JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id WHERE m.exam_id='$exam_id' AND m.marks!='A'");
 $subjTotals = [];
 while($s=mysqli_fetch_assoc($subjQ)){
     $sid = $s['subject_id'];
@@ -163,6 +164,34 @@ foreach($subjTotals as $sid=>$t){
     $subjGrades[$sid]['avg'] = $avg;
     $subjGrades[$sid]['grade'] = grade($avg);
 }
+
+// NEW: Compute REG, SAT, PASS, GPA per subject
+$extraQ = mysqli_query($conn,"SELECT m.subject_id, sbj.short_name,
+    COUNT(*) as reg,
+    SUM(CASE WHEN m.marks != 'A' THEN 1 ELSE 0 END) as sat,
+    SUM(CASE
+        WHEN m.marks != 'A' AND CAST(m.marks AS DECIMAL(5,1)) >= 75 THEN 1
+        WHEN m.marks != 'A' AND CAST(m.marks AS DECIMAL(5,1)) >= 65 THEN 2
+        WHEN m.marks != 'A' AND CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 3
+        WHEN m.marks != 'A' AND CAST(m.marks AS DECIMAL(5,1)) >= 30 THEN 4
+        WHEN m.marks != 'A' THEN 5
+        ELSE 0
+    END) as points_sum,
+    SUM(CASE WHEN m.marks != 'A' AND CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 1 ELSE 0 END) as pass_count
+FROM marks m JOIN subjects sbj ON sbj.id=m.subject_id JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id WHERE m.exam_id='$exam_id'
+GROUP BY m.subject_id, sbj.short_name");
+while($s=mysqli_fetch_assoc($extraQ)){
+    $sid = $s['subject_id'];
+    if(!isset($subjGrades[$sid])){
+        $subjGrades[$sid]=['name'=>$s['short_name'],'A'=>0,'B'=>0,'C'=>0,'D'=>0,'F'=>0,'avg'=>0,'grade'=>'F','pos'=>0];
+    }
+    $sat = (int)$s['sat'];
+    $subjGrades[$sid]['reg'] = (int)$s['reg'];
+    $subjGrades[$sid]['sat'] = $sat;
+    $subjGrades[$sid]['pass'] = (int)$s['pass_count'];
+    $subjGrades[$sid]['gpa'] = $sat > 0 ? round($s['points_sum'] / $sat, 2) : 0;
+}
+
 uasort($subjGrades,function($a,$b){
     return ($b['avg']??0) <=> ($a['avg']??0);
 });
@@ -170,15 +199,24 @@ $pos=1;
 foreach($subjGrades as &$sg){
     $sg['pos']=$pos++;
 }
+unset($sg);
 
 $schoolTotal = $all_school_totals;
 $schoolAvg = $schoolTotal > 0 ? round($all_school_sum / $schoolTotal, 2) : 0;
 $schoolGrade = grade($schoolAvg);
 
+// Compute School GPA: avg of total_points (best 7) for students with a division
+$schoolGpa = 0;
+$gpaQ = mysqli_query($conn,"SELECT SUM(total_points) as pts_sum, COUNT(*) as cnt FROM exam_results_summary WHERE exam_id='$exam_id' AND division != '' AND division IS NOT NULL");
+$gpaR = mysqli_fetch_assoc($gpaQ);
+if($gpaR && $gpaR['cnt'] > 0){
+    $schoolGpa = round($gpaR['pts_sum'] / $gpaR['cnt'], 2);
+}
+
 $summaryJson = json_encode([
     'divisions' => $divData,
     'subject_grades' => $subjGrades,
-    'school' => ['total_students'=>$schoolTotal,'school_avg'=>$schoolAvg,'school_grade'=>$schoolGrade],
+    'school' => ['total_students'=>$schoolTotal,'school_avg'=>$schoolAvg,'school_grade'=>$schoolGrade,'school_gpa'=>$schoolGpa],
     'generated_at' => date('Y-m-d H:i:s')
 ]);
 

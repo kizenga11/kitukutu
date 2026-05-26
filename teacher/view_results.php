@@ -402,6 +402,7 @@ $schoolInfo = $summary_json['school'] ?? null;
                 SELECT sub.subject_code, m.marks
                 FROM marks m
                 JOIN subjects sub ON sub.id = m.subject_id
+                JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
                 WHERE m.student_id = '$id' AND m.exam_id = '$exam_id'
                 ORDER BY sub.subject_code
             ");
@@ -454,6 +455,7 @@ $sg_q = mysqli_query($conn, "
            AVG(m.marks) as avg_mark
     FROM marks m
     JOIN subjects sbj ON sbj.id = m.subject_id
+    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
     WHERE m.exam_id = '$exam_id'
       AND m.marks != 'A'
     GROUP BY m.subject_id, sbj.subject_name

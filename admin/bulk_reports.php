@@ -83,6 +83,7 @@ $subs = mysqli_query($conn,"
 SELECT sub.subject_name,m.marks
 FROM marks m
 JOIN subjects sub ON sub.id=m.subject_id
+JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id
 WHERE m.exam_id=$exam_id
 AND m.student_id={$stu['student_id']}
 ");

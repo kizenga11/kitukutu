@@ -54,7 +54,9 @@ function division($p){
 
 /* ===== GET STUDENTS ===== */
 $students = mysqli_query($conn,"
-SELECT DISTINCT student_id FROM marks WHERE exam_id='$exam_id'
+SELECT DISTINCT m.student_id FROM marks m
+JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
+WHERE m.exam_id='$exam_id'
 ");
 
 $data = [];
@@ -64,8 +66,9 @@ while($st=mysqli_fetch_assoc($students)){
     $id = $st['student_id'];
 
     $q = mysqli_query($conn,"
-    SELECT marks FROM marks 
-    WHERE student_id='$id' AND exam_id='$exam_id'
+    SELECT m.marks FROM marks m
+    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
+    WHERE m.student_id='$id' AND m.exam_id='$exam_id'
     ");
 
     $total=0; $count=0; $pts=[];

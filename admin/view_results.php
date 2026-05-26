@@ -260,9 +260,9 @@ body{
     .div-table th{background:#ccc!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 
     .subj-section{box-shadow:none;border-radius:0;padding:6px 10px;border:1px solid #000;margin-bottom:6px;page-break-inside:avoid;}
-    .subj-table{width:100%;border-collapse:collapse;}
-    .subj-table th{background:#ccc!important;color:#000!important;font-size:8pt;border:1px solid #000;padding:4px 5px;}
-    .subj-table td{border:1px solid #000;padding:3px 5px;font-size:8pt;}
+    .subj-table{width:100%;border-collapse:collapse;font-size:7pt;}
+    .subj-table th{background:#ccc!important;color:#000!important;font-size:7pt;border:1px solid #000;padding:3px 4px;}
+    .subj-table td{border:1px solid #000;padding:2px 4px;font-size:7pt;}
     .subj-table tr:nth-child(even){background:#f5f5f5!important;}
 
     .table-card{box-shadow:none;border-radius:0;border:1px solid #000;}
@@ -415,7 +415,12 @@ $schoolInfo = $summary_json['school'] ?? null;
     <div class="summary-card">
         <div class="summary-title">School Summary</div>
         <div class="summary-grid">
-            <?php if($schoolInfo): $sc=$schoolInfo; ?>
+            <?php if($schoolInfo): $sc=$schoolInfo;
+            $schoolGpaLive = 0;
+            $gpaQL = mysqli_query($conn,"SELECT SUM(total_points) as pts_sum, COUNT(*) as cnt FROM exam_results_summary WHERE exam_id='$exam_id' AND division != '' AND division IS NOT NULL");
+            $gpaRL = mysqli_fetch_assoc($gpaQL);
+            if($gpaRL && $gpaRL['cnt'] > 0) $schoolGpaLive = round($gpaRL['pts_sum'] / $gpaRL['cnt'], 2);
+            ?>
             <div class="stat-item">
                 <div class="stat-value"><?= number_format((float)$sc['school_avg'],2) ?></div>
                 <div class="stat-label">Average</div>
@@ -427,6 +432,10 @@ $schoolInfo = $summary_json['school'] ?? null;
             <div class="stat-item">
                 <div class="stat-value"><?= (int)($sc['total_students']??0) ?></div>
                 <div class="stat-label">Students</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value"><?= number_format($schoolGpaLive,2) ?></div>
+                <div class="stat-label">School GPA</div>
             </div>
             <?php else: ?>
             <div class="stat-item">
@@ -480,6 +489,7 @@ $schoolInfo = $summary_json['school'] ?? null;
                 SELECT sub.subject_code, m.marks
                 FROM marks m
                 JOIN subjects sub ON sub.id = m.subject_id
+                JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
                 WHERE m.student_id = '$id' AND m.exam_id = '$exam_id'
                 ORDER BY sub.subject_code
             ");
@@ -522,35 +532,92 @@ $schoolInfo = $summary_json['school'] ?? null;
 
 <!-- SUBJECT PERFORMANCE SUMMARY (live query, all streams) -->
 <?php
+function competencyLabel($gpa){
+    if($gpa >= 1 && $gpa <= 2) return 'Excellent';
+    if($gpa >= 2.01 && $gpa <= 3) return 'Very Good';
+    if($gpa >= 3.01 && $gpa <= 4) return 'Good';
+    if($gpa >= 4.01 && $gpa <= 5) return 'Fail';
+    return '-';
+}
+
 $sg_q_a = mysqli_query($conn, "
     SELECT m.subject_id, sbj.subject_name,
-           COUNT(*) as total,
-           SUM(CASE WHEN m.marks >= 75 THEN 1 ELSE 0 END) as grade_a,
+           COUNT(*) as reg,
+           SUM(CASE WHEN m.marks != 'A' THEN 1 ELSE 0 END) as sat,
+           SUM(CASE WHEN m.marks >= 75 AND m.marks != 'A' THEN 1 ELSE 0 END) as grade_a,
            SUM(CASE WHEN m.marks >= 65 AND m.marks < 75 THEN 1 ELSE 0 END) as grade_b,
            SUM(CASE WHEN m.marks >= 45 AND m.marks < 65 THEN 1 ELSE 0 END) as grade_c,
            SUM(CASE WHEN m.marks >= 30 AND m.marks < 45 THEN 1 ELSE 0 END) as grade_d,
-           SUM(CASE WHEN m.marks >= 0 AND m.marks < 30 THEN 1 ELSE 0 END) as grade_f,
-           AVG(m.marks) as avg_mark
+           SUM(CASE WHEN m.marks >= 0 AND m.marks < 30 AND m.marks != 'A' THEN 1 ELSE 0 END) as grade_f,
+           AVG(CASE WHEN m.marks != 'A' THEN m.marks END) as avg_mark,
+           SUM(CASE
+               WHEN m.marks != 'A' AND m.marks >= 75 THEN 1
+               WHEN m.marks != 'A' AND m.marks >= 65 THEN 2
+               WHEN m.marks != 'A' AND m.marks >= 45 THEN 3
+               WHEN m.marks != 'A' AND m.marks >= 30 THEN 4
+               WHEN m.marks != 'A' THEN 5
+               ELSE 0
+           END) as points_sum,
+           SUM(CASE WHEN m.marks != 'A' AND m.marks >= 45 THEN 1 ELSE 0 END) as pass_count
     FROM marks m
     JOIN subjects sbj ON sbj.id = m.subject_id
+    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
     WHERE m.exam_id = '$exam_id'
-      AND m.marks != 'A'
     GROUP BY m.subject_id, sbj.subject_name
     ORDER BY avg_mark DESC
 ");
-$sg_data_a = [];
-$pos = 1;
-while ($sg_r = mysqli_fetch_assoc($sg_q_a)) {
-    $sg_r['pos'] = $pos++;
-    $sg_data_a[] = $sg_r;
+$raw_subjects = [];
+if ($sg_q_a) {
+    while ($sg_r = mysqli_fetch_assoc($sg_q_a)) {
+        $sg_r['gpa'] = $sg_r['sat'] > 0 ? round($sg_r['points_sum'] / $sg_r['sat'], 2) : 0;
+        $raw_subjects[] = $sg_r;
+    }
 }
+
+// Merge duplicate subject names (e.g., English GENERAL + English VOCATIONAL)
+$merged = [];
+foreach($raw_subjects as $sg){
+    $name = strtoupper(trim($sg['subject_name']));
+    if(!isset($merged[$name])){
+        $merged[$name] = $sg;
+    } else {
+        $m = &$merged[$name];
+        $m['grade_a'] += $sg['grade_a'];
+        $m['grade_b'] += $sg['grade_b'];
+        $m['grade_c'] += $sg['grade_c'];
+        $m['grade_d'] += $sg['grade_d'];
+        $m['grade_f'] += $sg['grade_f'];
+        $m['reg'] += $sg['reg'];
+        $m['pass_count'] += $sg['pass_count'];
+        $c1 = $m['sat'];
+        $c2 = $sg['sat'];
+        $totalSat = $c1 + $c2;
+        $m['avg_mark'] = $totalSat > 0 ? ($m['avg_mark'] * $c1 + $sg['avg_mark'] * $c2) / $totalSat : 0;
+        $m['points_sum'] += $sg['points_sum'];
+        $m['sat'] = $totalSat;
+        $m['gpa'] = $totalSat > 0 ? round($m['points_sum'] / $totalSat, 2) : 0;
+    }
+}
+$sg_data_a = array_values($merged);
+usort($sg_data_a, function($a, $b){
+    return ($b['avg_mark']??0) <=> ($a['avg_mark']??0);
+});
+$pos = 1;
+foreach($sg_data_a as &$sg){
+    $sg['pos'] = $pos++;
+}
+unset($sg);
 ?>
 <?php if (!empty($sg_data_a)): ?>
 <div class="subj-section">
     <div class="summary-title" style="margin-bottom:8px;">Subject Performance Summary</div>
     <div class="table-wrap">
         <table class="subj-table">
-            <tr><th>#</th><th>Subject</th><th>A</th><th>B</th><th>C</th><th>D</th><th>F</th><th>Avg</th><th>Grade</th></tr>
+            <tr>
+                <th>#</th><th>Subject</th><th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
+                <th>Avg</th><th>Grade</th>
+                <th>REG</th><th>SAT</th><th>CLEAN</th><th>PASS</th><th>GPA</th><th>Competency Level</th>
+            </tr>
             <?php foreach($sg_data_a as $sg): ?>
             <tr>
                 <td style="font-weight:700;"><?= $sg['pos'] ?></td>
@@ -562,6 +629,12 @@ while ($sg_r = mysqli_fetch_assoc($sg_q_a)) {
                 <td style="color:#c0392b;"><?= (int)$sg['grade_f'] ?></td>
                 <td style="font-weight:700;color:#1a1a2e;"><?= number_format((float)$sg['avg_mark'],2) ?></td>
                 <td style="font-weight:800;font-size:13px;"><?= grade($sg['avg_mark']) ?></td>
+                <td><?= (int)$sg['reg'] ?></td>
+                <td><?= (int)$sg['sat'] ?></td>
+                <td><?= (int)$sg['sat'] ?></td>
+                <td><?= (int)$sg['pass_count'] ?></td>
+                <td style="font-weight:700;"><?= number_format((float)$sg['gpa'],2) ?></td>
+                <td style="font-size:11px;"><?= competencyLabel($sg['gpa']) ?></td>
             </tr>
             <?php endforeach; ?>
         </table>

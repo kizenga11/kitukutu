@@ -51,6 +51,7 @@ END
 ) as gpa
 
 FROM marks m
+JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
 WHERE m.subject_id IN (
 SELECT id FROM subjects WHERE subject_name='$subject_name'
 )
@@ -96,6 +97,7 @@ SUM(CASE WHEN m.marks='A' THEN 1 ELSE 0 END) ABS
 
 FROM marks m
 JOIN students s ON s.id=m.student_id
+JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
 
 WHERE m.subject_id IN (
 SELECT id FROM subjects WHERE subject_name='$subject_name'

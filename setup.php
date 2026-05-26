@@ -400,7 +400,7 @@ if (mysqli_num_rows($tblCheck) == 0) {
             ['B', 65.00,  74.99, 2, 'VIZURI SANA'],
             ['C', 45.00,  64.99, 3, 'WASTANI'],
             ['D', 30.00,  44.99, 4, 'HAFIFU'],
-            ['F',  0.00,  29.99, 5, 'KUSHINDWA'],
+            ['F',  0.00,  29.99, 5, 'FELI'],
         ];
         foreach ($seeds as $s) {
             mysqli_query($conn, "INSERT IGNORE INTO `grade_scales` (grade_letter, min_marks, max_marks, points, remark)
