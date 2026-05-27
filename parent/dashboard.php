@@ -24,6 +24,12 @@ while ($c = mysqli_fetch_assoc($children)) {
     $child_list[] = $c;
     $total_children++;
 }
+
+// Force parent to link a student first
+if ($total_children === 0) {
+    header("Location: link_student.php");
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="sw">

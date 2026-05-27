@@ -242,9 +242,9 @@ body{
 
       <form method="POST">
         <div class="field">
-          <label for="registration_no">Namba ya Usajili wa Mwanafunzi</label>
-          <input type="text" name="registration_no" id="registration_no" placeholder="KTTS-0001-2026" required style="text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
-          <div style="font-size:11px;color:#6b7280;margin-top:4px;">Mfano: KTTS-0001-2026</div>
+          <label for="registration_no">Namba ya Usajili wa Mwanafunzi <span style="color:#dc2626;">*</span></label>
+          <input type="text" name="registration_no" id="registration_no" placeholder="Ingiza namba ya usajili" required style="text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">
+          <div class="hint" style="font-size:11px;color:#6b7280;margin-top:4px;">Namba hii utapata kutoka kwa mwalimu au ofisi ya shule.</div>
         </div>
         <div class="field">
           <label for="relationship">Uhusiano (hiari)</label>

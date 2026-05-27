@@ -15,7 +15,10 @@ if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email'], $_POST['passw
         if(password_verify($password, $parent['password'])){
             session_regenerate_id(true);
             $_SESSION['parent_id'] = $parent['id'];
-            header("Location: dashboard.php");
+            // Force link students if none linked
+            $check = mysqli_query($conn, "SELECT id FROM parent_students WHERE parent_id='{$parent['id']}' LIMIT 1");
+            $target = ($check && mysqli_num_rows($check) > 0) ? 'dashboard.php' : 'link_student.php';
+            header("Location: $target");
             exit();
         }
     }
