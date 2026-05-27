@@ -55,6 +55,9 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
       <a href="teacher_exam_comparison.php" target="mainFrame">📈 Comparison</a>
       <a href="view_exam_results.php" target="mainFrame">📋 View Results</a>
       <a href="academic_calendar.php" target="mainFrame">📅 Calendar</a>
+      <a href="post_assignments.php" target="mainFrame">📝 Post Assignments</a>
+      <a href="manage_resources.php" target="mainFrame">📚 Nyenzo za Masomo</a>
+      <a href="manage_contributions.php" target="mainFrame">💰 Contributions</a>
     </nav>
   </aside>
 

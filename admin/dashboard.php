@@ -81,6 +81,7 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
                 <li><a href="add_student.php" target="mainFrame"><i class="bi bi-people"></i> Students</a></li>
                 <li><a href="manage_student_subjects.php" target="mainFrame"><i class="bi bi-journal-bookmark-fill"></i> Student Subjects</a></li>
                 <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Admissions</a></li>
+                <li><a href="manage_parents.php" target="mainFrame"><i class="bi bi-people-fill"></i> Parents</a></li>
             </ul>
         </li>
 
@@ -153,6 +154,18 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
                 <li><a href="messages.php" target="mainFrame"><i class="bi bi-envelope"></i> Messages <?php if($unread_messages > 0): ?><span class="badge-msg"><?= $unread_messages ?></span><?php endif; ?></a></li>
                 <li><a href="manage_alerts.php" target="mainFrame"><i class="bi bi-bell-fill"></i> Notifications</a></li>
                 <li><a href="send_results_sms.php" target="mainFrame"><i class="bi bi-chat-dots"></i> SMS</a></li>
+            </ul>
+        </li>
+
+        <!-- Parent Features -->
+        <li class="nav-group">
+            <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+                <span class="gleft"><i class="bi bi-house-heart-fill"></i> Parents</span>
+                <i class="bi bi-chevron-down gchev"></i>
+            </div>
+            <ul class="nav-sub">
+                <li><a href="post_assignments.php" target="mainFrame"><i class="bi bi-journal-check"></i> Assignments</a></li>
+                <li><a href="manage_contributions.php" target="mainFrame"><i class="bi bi-cash-stack"></i> Contributions</a></li>
             </ul>
         </li>
 
