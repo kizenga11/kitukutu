@@ -21,7 +21,7 @@ if ($isRailway) {
     $port = 3306;
     $user = 'root';
     $pass = '';
-    $db   = 'kitukutu_db';
+    $db   = 'railway';
 }
 
 $conn = mysqli_connect($host, $user, $pass, $db, $port);
