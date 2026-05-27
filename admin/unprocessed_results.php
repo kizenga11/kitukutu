@@ -158,7 +158,7 @@ tr:nth-child(even){background:#f8f9fc;}
                 <select name="exam_id" class="form-select" required>
                     <option value="">— Select —</option>
                     <?php
-                    $ex = mysqli_query($conn, "SELECT id, exam_name FROM exams WHERE is_published=1");
+                    $ex = mysqli_query($conn, "SELECT id, exam_name FROM exams ORDER BY start_date DESC");
                     while ($e = mysqli_fetch_assoc($ex)):
                         $sel = $sel_exam == $e['id'] ? 'selected' : ''; ?>
                     <option value="<?= $e['id'] ?>" <?= $sel ?>><?= htmlspecialchars($e['exam_name']) ?></option>

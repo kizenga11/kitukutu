@@ -34,7 +34,9 @@
       "Bash(mysql -u root --password=\"\" kitukutu_db -e \"SELECT id, exam_name FROM exams ORDER BY id DESC LIMIT 5;\")",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root --password=\"\" kitukutu_db -e \"SELECT id, exam_name FROM exams ORDER BY id DESC LIMIT 5; SELECT id, first_name, last_name, form_level FROM students LIMIT 5; SELECT DISTINCT exam_id, student_id, form_level FROM exam_results_summary LIMIT 5;\" 2>$null)",
       "PowerShell(& \"C:\\\\xampp\\\\mysql\\\\bin\\\\mysql.exe\" -u root --password=\"\" kitukutu_db -e \"SELECT DISTINCT ers.exam_id, ers.student_id, ers.form_level, e.exam_name FROM exam_results_summary ers JOIN exams e ON e.id=ers.exam_id ORDER BY ers.exam_id DESC LIMIT 5;\" 2>$null)",
-      "PowerShell(Start-Process \"http://localhost/kitukutu/admin/student_report.php?exam_id=24&student_id=43\")"
+      "PowerShell(Start-Process \"http://localhost/kitukutu/admin/student_report.php?exam_id=24&student_id=43\")",
+      "Bash(php -r 'require_once '\\\\''config.php'\\\\''; require_once '\\\\''db.php'\\\\''; $stmt = $pdo->query\\('\\\\''DESCRIBE users'\\\\''\\); var_dump\\($stmt->fetchAll\\(PDO::FETCH_ASSOC\\)\\);')",
+      "Bash(php *)"
     ]
   }
 }
