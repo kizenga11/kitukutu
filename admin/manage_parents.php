@@ -48,12 +48,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $parent_id = intval($_POST['parent_id']);
         $student_id = intval($_POST['student_id']);
         $rel = mysqli_real_escape_string($conn, $_POST['relationship']);
-        $existing = mysqli_query($conn, "SELECT id FROM parent_students WHERE parent_id='$parent_id' AND student_id='$student_id'");
-        if ($existing && mysqli_num_rows($existing) > 0) {
-            $err = "Mwanafunzi tayari ameunganishwa na mzazi huyu.";
+        $existing = mysqli_query($conn, "SELECT ps.id, p.first_name AS pf, p.last_name AS pl FROM parent_students ps JOIN parents p ON p.id=ps.parent_id WHERE ps.student_id='$student_id'");
+        $existingRow = ($existing && mysqli_num_rows($existing) > 0) ? mysqli_fetch_assoc($existing) : null;
+        if ($existingRow) {
+            $err = "Mwanafunzi huyu tayari ana mzazi (" . htmlspecialchars($existingRow['pf'] ?? '') . ' ' . htmlspecialchars($existingRow['pl'] ?? '') . "). Mzazi mmoja tu kwa kila mwanafunzi.";
         } else {
-            mysqli_query($conn, "INSERT INTO parent_students (parent_id, student_id, relationship) VALUES ('$parent_id', '$student_id', '$rel')");
-            $msg = "Mwanafunzi ameunganishwa na mzazi.";
+            $existing_parent = mysqli_query($conn, "SELECT id FROM parent_students WHERE parent_id='$parent_id' AND student_id='$student_id'");
+            if ($existing_parent && mysqli_num_rows($existing_parent) > 0) {
+                $err = "Mwanafunzi tayari ameunganishwa na mzazi huyu.";
+            } else {
+                mysqli_query($conn, "INSERT INTO parent_students (parent_id, student_id, relationship) VALUES ('$parent_id', '$student_id', '$rel')");
+                $msg = "Mwanafunzi ameunganishwa na mzazi.";
+            }
         }
     } elseif ($_POST['action'] === 'unlink_student') {
         $pid = intval($_POST['parent_id']);
@@ -64,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $parents = mysqli_query($conn, "SELECT * FROM parents ORDER BY first_name");
-$students = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream FROM students ORDER BY first_name");
+$students = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream, registration_no FROM students ORDER BY first_name");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -119,8 +125,9 @@ th{background:var(--primary);color:#fff;font-size:11px;}
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="student_ids[]" value="<?= $s['id'] ?>" id="s_<?= $s['id'] ?>">
             <label class="form-check-label" for="s_<?= $s['id'] ?>" style="font-size:11px;">
-              <?= htmlspecialchars($s['first_name'].' '.$s['last_name']) ?> <small>(<?= htmlspecialchars($s['form_level'].' '.$s['stream']) ?>)</small>
-            </label>
+                <?= htmlspecialchars($s['first_name'].' '.$s['last_name']) ?> <small>(<?= htmlspecialchars($s['form_level'].' '.$s['stream']) ?>)</small>
+                <?php if ($s['registration_no']): ?><span style="color:#6366f1;"> <?= htmlspecialchars($s['registration_no']) ?></span><?php endif; ?>
+              </label>
           </div>
           <input type="text" name="relationship_<?= $s['id'] ?>" class="form-control form-control-sm mt-1" placeholder="e.g. Mzazi, Mlezi" style="font-size:10px;display:none;" disabled>
         </div>
@@ -139,7 +146,7 @@ th{background:var(--primary);color:#fff;font-size:11px;}
 <?php else: ?>
 <?php while ($p = mysqli_fetch_assoc($parents)):
   $children = mysqli_query($conn, "
-    SELECT s.id, s.first_name, s.second_name, s.last_name, s.form_level, s.stream, ps.relationship
+    SELECT s.id, s.first_name, s.second_name, s.last_name, s.form_level, s.stream, s.registration_no, ps.relationship
     FROM parent_students ps
     JOIN students s ON s.id = ps.student_id
     WHERE ps.parent_id='{$p['id']}'
@@ -167,6 +174,7 @@ th{background:var(--primary);color:#fff;font-size:11px;}
         <i class="bi bi-person-circle"></i>
         <?= htmlspecialchars($ch['first_name'].' '.$ch['last_name']) ?>
         <span class="text-muted">(<?= htmlspecialchars($ch['form_level'].' '.$ch['stream']) ?>)</span>
+        <?php if ($ch['registration_no']): ?><span class="badge bg-primary" style="font-size:9px;"><?= htmlspecialchars($ch['registration_no']) ?></span><?php endif; ?>
         <?php if ($ch['relationship']): ?><span class="badge bg-info"><?= htmlspecialchars($ch['relationship']) ?></span><?php endif; ?>
         <form method="POST" style="display:inline;" onsubmit="return confirm('Remove this student?')">
           <input type="hidden" name="action" value="unlink_student">
@@ -190,7 +198,7 @@ th{background:var(--primary);color:#fff;font-size:11px;}
         <select name="student_id" class="form-select form-select-sm" required>
           <option value="">— Select Student —</option>
           <?php mysqli_data_seek($students, 0); while ($s = mysqli_fetch_assoc($students)): ?>
-          <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['first_name'].' '.$s['last_name'].' ('.$s['form_level'].' '.$s['stream'].')') ?></option>
+          <option value="<?= $s['id'] ?>"><?= htmlspecialchars($s['first_name'].' '.$s['last_name'].' ('.$s['form_level'].' '.$s['stream'].')') ?> <?= $s['registration_no'] ? '[' . htmlspecialchars($s['registration_no']) . ']' : '' ?></option>
           <?php endwhile; ?>
         </select>
       </div>

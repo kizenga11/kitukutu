@@ -708,6 +708,7 @@ HEADER
       <li><a href="#results">Results</a></li>
       <li><a href="#contact">Contact</a></li>
       <li><a href="login.php" class="login-btn"><i class="fas fa-user"></i> Staff Login</a></li>
+      <li><a href="parent/register.php" class="login-btn" style="background:#16a34a;"><i class="fas fa-user-plus"></i> Jisajili</a></li>
       <li><a href="parent/login.php" class="login-btn" style="background:#059669;"><i class="fas fa-user-friends"></i> Mzazi</a></li>
     </ul>
   </nav>
@@ -719,6 +720,7 @@ HEADER
   <a href="#announcements" onclick="closeMobileNav()">Announcements</a>
   <a href="#results" onclick="closeMobileNav()">Results</a>
   <a href="#contact" onclick="closeMobileNav()">Contact</a>
+  <a href="parent/register.php" class="m-login" style="background:#16a34a;color:#fff!important;"><i class="fas fa-user-plus"></i> Jisajili Mzazi</a>
   <a href="parent/login.php" class="m-login"><i class="fas fa-user-friends"></i> Mzazi</a>
   <a href="login.php" class="m-login"><i class="fas fa-user"></i> Staff Login</a>
 </div>
@@ -738,6 +740,7 @@ HERO SLIDER SECTION
 <div style="margin-top: 20px;">
 <a href="admission.php" class="btn"> <i class="fas fa-user-plus"></i> Apply for Admission </a>
 <a href="login.php" class="btn" style="background: #f4b400; color: #0f2b4b; margin-left: 10px;"> <i class="fas fa-sign-in-alt"></i> Staff Login </a>
+<a href="parent/register.php" class="btn" style="background: #16a34a; color: #fff; margin-left: 10px;"> <i class="fas fa-user-plus"></i> Jisajili </a>
 <a href="parent/login.php" class="btn" style="background: #059669; color: #fff; margin-left: 10px;"> <i class="fas fa-user-friends"></i> Mzazi Login </a>
 </div>
 </div>

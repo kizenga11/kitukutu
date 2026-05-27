@@ -192,6 +192,7 @@ body{
 
     <div class="form-footer">
       <a href="../index.php" class="back-home"><i class="fas fa-arrow-left"></i> Nyumbani</a>
+      <a href="register.php" style="font-size:0.82rem;color:#059669;text-decoration:none;font-weight:600;"><i class="fas fa-user-plus"></i> Jisajili</a>
     </div>
   </div>
 </div>

@@ -760,6 +760,98 @@ if ($enumCheck && mysqli_num_rows($enumCheck) > 0) {
 }
 
 // ──────────────────────────────────────────────────────────
+//  32. Add registration_no column to students
+// ──────────────────────────────────────────────────────────
+if (!columnExists($conn, 'students', 'registration_no')) {
+    $sql = "ALTER TABLE `students` ADD `registration_no` VARCHAR(50) DEFAULT NULL AFTER `id`, ADD UNIQUE KEY `uq_reg_no` (`registration_no`)";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Added `registration_no` column to `students`.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add `registration_no`: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`registration_no` already exists in `students`.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  33. Generate registration_no for existing students
+// ──────────────────────────────────────────────────────────
+$nullReg = mysqli_query($conn, "SELECT id FROM students WHERE registration_no IS NULL OR registration_no = ''");
+$countNull = mysqli_num_rows($nullReg);
+if ($countNull > 0) {
+    $updated = 0;
+    while ($r = mysqli_fetch_assoc($nullReg)) {
+        $sid = (int) $r['id'];
+        $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+        $regNoEsc = mysqli_real_escape_string($conn, $regNo);
+        mysqli_query($conn, "UPDATE students SET registration_no='$regNoEsc' WHERE id=$sid AND (registration_no IS NULL OR registration_no = '')");
+        $updated++;
+    }
+    $results[] = ['msg'=>"Generated registration_no for $updated existing students.", 'type'=>'ok'];
+} else {
+    $results[] = ['msg'=>'All students already have registration_no.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  34. Change parent_students unique key — one parent per student
+// ──────────────────────────────────────────────────────────
+$idxCheck = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_parent_student'");
+if (mysqli_num_rows($idxCheck) > 0) {
+    // Remove duplicate student entries first (keep only the first link)
+    $dupes = mysqli_query($conn, "
+        SELECT student_id FROM parent_students
+        GROUP BY student_id HAVING COUNT(*) > 1
+    ");
+    $removed = 0;
+    while ($d = mysqli_fetch_assoc($dupes)) {
+        $sId = (int) $d['student_id'];
+        $keep = mysqli_fetch_assoc(mysqli_query($conn, "SELECT MIN(id) AS min_id FROM parent_students WHERE student_id=$sId"));
+        $keepId = (int) $keep['min_id'];
+        mysqli_query($conn, "DELETE FROM parent_students WHERE student_id=$sId AND id != $keepId");
+        $removed++;
+    }
+    if ($removed > 0) {
+        $results[] = ['msg'=>"Removed $removed duplicate parent-student link(s).", 'type'=>'ok'];
+    }
+
+    // Drop old composite unique key
+    if (mysqli_query($conn, "ALTER TABLE `parent_students` DROP INDEX `uq_parent_student`")) {
+        $results[] = ['msg'=>'Dropped old composite UNIQUE KEY (parent_id, student_id).', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to drop old unique key: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+    // Add new unique key on student_id only
+    if (mysqli_query($conn, "ALTER TABLE `parent_students` ADD UNIQUE KEY `uq_student` (`student_id`)")) {
+        $results[] = ['msg'=>'Added new UNIQUE KEY on `student_id` — one parent per student.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add new unique key: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    // Check if the new key already exists
+    $newIdx = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_student'");
+    if (mysqli_num_rows($newIdx) == 0) {
+        // Clean dupes then add
+        $dupes = mysqli_query($conn, "SELECT student_id FROM parent_students GROUP BY student_id HAVING COUNT(*) > 1");
+        while ($d = mysqli_fetch_assoc($dupes)) {
+            $sId = (int) $d['student_id'];
+            $keep = mysqli_fetch_assoc(mysqli_query($conn, "SELECT MIN(id) AS min_id FROM parent_students WHERE student_id=$sId"));
+            mysqli_query($conn, "DELETE FROM parent_students WHERE student_id=$sId AND id != {$keep['min_id']}");
+        }
+        if (mysqli_query($conn, "ALTER TABLE `parent_students` ADD UNIQUE KEY `uq_student` (`student_id`)")) {
+            $results[] = ['msg'=>'Added UNIQUE KEY on `student_id` — one parent per student.', 'type'=>'ok'];
+        } else {
+            $results[] = ['msg'=>'Failed to add unique key on student_id: ' . mysqli_error($conn), 'type'=>'err'];
+            $hasError = true;
+        }
+    } else {
+        $results[] = ['msg'=>'`parent_students` already has the correct unique constraint.', 'type'=>'skip'];
+    }
+}
+
+// ──────────────────────────────────────────────────────────
 //  Done
 // ──────────────────────────────────────────────────────────
 ?>

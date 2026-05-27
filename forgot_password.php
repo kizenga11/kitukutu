@@ -43,6 +43,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['email']) && !isset($_
         $row = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id, first_name, last_name, email FROM teachers WHERE email='$email' LIMIT 1"));
         if ($row) { $user_id = $row['id']; $user_type = 'teacher'; $user_name = trim($row['first_name'] . ' ' . $row['last_name']); }
     }
+    if (!$user_id) {
+        $row = mysqli_fetch_assoc(mysqli_query($conn, "SELECT id, first_name, last_name, email FROM parents WHERE email='$email' LIMIT 1"));
+        if ($row) { $user_id = $row['id']; $user_type = 'parent'; $user_name = trim($row['first_name'] . ' ' . $row['last_name']); }
+    }
 
     if ($user_id) {
         mysqli_query($conn, "DELETE FROM password_reset_tokens WHERE user_type='$user_type' AND user_id=$user_id");
@@ -166,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['new_password'])) {
             $hash      = password_hash($password, PASSWORD_DEFAULT);
             $user_id   = (int) $row['user_id'];
             $user_type = $row['user_type'];
-            $table     = $user_type === 'teacher' ? 'teachers' : 'admins';
+            $table     = $user_type === 'teacher' ? 'teachers' : ($user_type === 'parent' ? 'parents' : 'admins');
 
             mysqli_query($conn, "UPDATE $table SET password='$hash' WHERE id=$user_id");
             mysqli_query($conn, "DELETE FROM password_reset_tokens WHERE id=$tid");

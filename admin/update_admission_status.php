@@ -39,6 +39,8 @@ if ($status === 'Approved') {
             VALUES ('$first', '$middle', '$last', '$gender', '$entry_level', '$stream', '$phone')");
 
             $student_id = mysqli_insert_id($conn);
+            $regNo = 'KTTS-' . str_pad($student_id, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+            mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$student_id");
 
             // Auto-assign compulsory subjects for this stream
             $comp = mysqli_query($conn, "SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$stream') AND LOWER(category)='compulsory'");

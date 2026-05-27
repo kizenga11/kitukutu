@@ -23,6 +23,8 @@ if (isset($_POST['register_manual'])) {
 
     if (mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream,parent_phone) VALUES('$first','$second','$last','$sex','$form_level','$stream','$phone')")) {
         $sid = mysqli_insert_id($conn);
+        $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+        mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$sid");
         $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$stream') AND LOWER(category)='compulsory'");
         while ($s = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$s['id']}')");
         if (isset($_POST['optional_subjects'])) {
@@ -93,6 +95,8 @@ if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
         if ($f && $l) {
             mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream) VALUES('$f','$s','$l','$sx','$fl','$st')");
             $sid = mysqli_insert_id($conn);
+            $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+            mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$sid");
             $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$st') AND LOWER(category)='compulsory'");
             while ($srow = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$srow['id']}')");
             $count++;
@@ -408,10 +412,10 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
         ?>
         <div class="stu-row" data-search="<?= strtolower(htmlspecialchars($name.' '.$row['sex'].' '.$row['stream'].' '.($row['form_level']??''))) ?>">
           <div class="stu-avatar" style="background:<?= $av_bg ?>"><?= $init ?></div>
-          <div class="stu-name">
-            <div class="sn"><?= htmlspecialchars($name) ?></div>
-            <div class="sm"><?= htmlspecialchars($row['sex']) ?> &bull; <?= htmlspecialchars($row['parent_phone'] ?? '') ?></div>
-          </div>
+            <div class="stu-name">
+              <div class="sn"><?= htmlspecialchars($name) ?></div>
+              <div class="sm"><?= htmlspecialchars($row['sex']) ?> &bull; <?= htmlspecialchars($row['parent_phone'] ?? '') ?> <?= $row['registration_no'] ? '<span style="color:#6366f1;font-weight:600;">&bull; ' . htmlspecialchars($row['registration_no']) . '</span>' : '' ?></div>
+            </div>
           <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#ede9fe;color:#5b21b6;flex-shrink:0;"><?= $form_label ?></span>
           <span class="stream-pill <?= $is_voc ? 'stream-voc' : 'stream-gen' ?>"><?= htmlspecialchars($row['stream']) ?></span>
           <a href="?edit=<?= $row['id'] ?>" class="act-btn edt" title="Edit"><i class="bi bi-pencil"></i></a>
