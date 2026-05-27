@@ -796,60 +796,60 @@ if ($countNull > 0) {
 // ──────────────────────────────────────────────────────────
 //  34. Change parent_students unique key — one parent per student
 // ──────────────────────────────────────────────────────────
-$idxCheck = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_parent_student'");
-if (mysqli_num_rows($idxCheck) > 0) {
-    // Remove duplicate student entries first (keep only the first link)
-    $dupes = mysqli_query($conn, "
-        SELECT student_id FROM parent_students
-        GROUP BY student_id HAVING COUNT(*) > 1
-    ");
-    $removed = 0;
-    while ($d = mysqli_fetch_assoc($dupes)) {
-        $sId = (int) $d['student_id'];
-        $keep = mysqli_fetch_assoc(mysqli_query($conn, "SELECT MIN(id) AS min_id FROM parent_students WHERE student_id=$sId"));
-        $keepId = (int) $keep['min_id'];
-        mysqli_query($conn, "DELETE FROM parent_students WHERE student_id=$sId AND id != $keepId");
-        $removed++;
+// First, drop FK constraints so we can alter indexes
+$fkDropped = false;
+$fkResult = mysqli_query($conn, "SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='parent_students' AND REFERENCED_TABLE_NAME IS NOT NULL");
+if ($fkResult) {
+    while ($fk = mysqli_fetch_assoc($fkResult)) {
+        $cn = $fk['CONSTRAINT_NAME'];
+        mysqli_query($conn, "ALTER TABLE `parent_students` DROP FOREIGN KEY `$cn`");
     }
-    if ($removed > 0) {
-        $results[] = ['msg'=>"Removed $removed duplicate parent-student link(s).", 'type'=>'ok'];
-    }
+    $fkDropped = true;
+}
 
-    // Drop old composite unique key
-    if (mysqli_query($conn, "ALTER TABLE `parent_students` DROP INDEX `uq_parent_student`")) {
-        $results[] = ['msg'=>'Dropped old composite UNIQUE KEY (parent_id, student_id).', 'type'=>'ok'];
-    } else {
-        $results[] = ['msg'=>'Failed to drop old unique key: ' . mysqli_error($conn), 'type'=>'err'];
-        $hasError = true;
-    }
-    // Add new unique key on student_id only
-    if (mysqli_query($conn, "ALTER TABLE `parent_students` ADD UNIQUE KEY `uq_student` (`student_id`)")) {
-        $results[] = ['msg'=>'Added new UNIQUE KEY on `student_id` — one parent per student.', 'type'=>'ok'];
-    } else {
-        $results[] = ['msg'=>'Failed to add new unique key: ' . mysqli_error($conn), 'type'=>'err'];
+// Remove duplicate student entries first (keep only the first link)
+$dupes = mysqli_query($conn, "
+    SELECT student_id FROM parent_students
+    GROUP BY student_id HAVING COUNT(*) > 1
+");
+$removed = 0;
+while ($d = mysqli_fetch_assoc($dupes)) {
+    $sId = (int) $d['student_id'];
+    $keep = mysqli_fetch_assoc(mysqli_query($conn, "SELECT MIN(id) AS min_id FROM parent_students WHERE student_id=$sId"));
+    $keepId = (int) $keep['min_id'];
+    mysqli_query($conn, "DELETE FROM parent_students WHERE student_id=$sId AND id != $keepId");
+    $removed++;
+}
+if ($removed > 0) {
+    $results[] = ['msg'=>"Removed $removed duplicate parent-student link(s).", 'type'=>'ok'];
+}
+
+// Drop old composite unique key if it exists
+$uqCheck = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_parent_student'");
+if (mysqli_num_rows($uqCheck) > 0) {
+    mysqli_query($conn, "ALTER TABLE `parent_students` DROP INDEX `uq_parent_student`");
+}
+
+// Add new unique key on student_id only (if not already exists)
+$newIdx = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_student'");
+$uqAdded = false;
+if (mysqli_num_rows($newIdx) == 0) {
+    try {
+        if (mysqli_query($conn, "ALTER TABLE `parent_students` ADD UNIQUE KEY `uq_student` (`student_id`)")) {
+            $results[] = ['msg'=>'Added UNIQUE KEY on `student_id` — one parent per student.', 'type'=>'ok'];
+            $uqAdded = true;
+        }
+    } catch (\Throwable $e) {
+        $results[] = ['msg'=>'Failed to add unique key: ' . mysqli_error($conn), 'type'=>'err'];
         $hasError = true;
     }
 } else {
-    // Check if the new key already exists
-    $newIdx = mysqli_query($conn, "SHOW INDEX FROM `parent_students` WHERE Key_name = 'uq_student'");
-    if (mysqli_num_rows($newIdx) == 0) {
-        // Clean dupes then add
-        $dupes = mysqli_query($conn, "SELECT student_id FROM parent_students GROUP BY student_id HAVING COUNT(*) > 1");
-        while ($d = mysqli_fetch_assoc($dupes)) {
-            $sId = (int) $d['student_id'];
-            $keep = mysqli_fetch_assoc(mysqli_query($conn, "SELECT MIN(id) AS min_id FROM parent_students WHERE student_id=$sId"));
-            mysqli_query($conn, "DELETE FROM parent_students WHERE student_id=$sId AND id != {$keep['min_id']}");
-        }
-        if (mysqli_query($conn, "ALTER TABLE `parent_students` ADD UNIQUE KEY `uq_student` (`student_id`)")) {
-            $results[] = ['msg'=>'Added UNIQUE KEY on `student_id` — one parent per student.', 'type'=>'ok'];
-        } else {
-            $results[] = ['msg'=>'Failed to add unique key on student_id: ' . mysqli_error($conn), 'type'=>'err'];
-            $hasError = true;
-        }
-    } else {
-        $results[] = ['msg'=>'`parent_students` already has the correct unique constraint.', 'type'=>'skip'];
-    }
+    $results[] = ['msg'=>'`parent_students` already has the correct unique constraint.', 'type'=>'skip'];
 }
+
+// Re-add FK constraints
+mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`parent_id`) REFERENCES `parents`(`id`) ON DELETE CASCADE");
+mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`student_id`) REFERENCES `students`(`id`) ON DELETE CASCADE");
 
 // ──────────────────────────────────────────────────────────
 //  Done
