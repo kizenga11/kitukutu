@@ -171,7 +171,6 @@ th{background:var(--primary);color:#fff;font-size:0.8rem;text-transform:uppercas
       <tr class="gpa-row">
         <td colspan="4">
           <div class="d-flex justify-content-between">
-            <span><strong>Jumla ya Pointi:</strong> <?= $total_pts ?> / <?= $total_subs * 5 ?></span>
             <span><strong>GPA:</strong> <?= number_format($gpa, 2) ?></span>
             <span><strong>Wastani:</strong> <?= number_format($avg, 1) ?>%</span>
             <span><strong>Daraja:</strong> <?= htmlspecialchars($e['division'] ?: '-') ?></span>
