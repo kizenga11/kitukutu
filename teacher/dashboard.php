@@ -45,20 +45,54 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
       <div class="sub"><?= htmlspecialchars($active_year_name) ?> · <?= htmlspecialchars($teacher['first_name'] ?? 'Teacher') ?></div>
     </div>
 
-    <nav class="nav flex-column mt-2">
-      <a class="active" href="home.php" target="mainFrame">Home</a>
-      <a href="enter_marks_hub.php" target="mainFrame">✏️ Enter Marks</a>
-      <a href="teaching_progress.php" target="mainFrame">📚 Teaching Progress</a>
-      <a href="teaching_docs.php" target="mainFrame">📖 Teaching Docs</a>
-      <a href="notifications.php" target="mainFrame">🔔 Notifications<?php if ($unread_notif > 0): ?> <span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?= $unread_notif ?></span><?php endif; ?></a>
-      <a href="teacher_subject_analysis.php" target="mainFrame">📊 Analysis</a>
-      <a href="teacher_exam_comparison.php" target="mainFrame">📈 Comparison</a>
-      <a href="view_exam_results.php" target="mainFrame">📋 View Results</a>
-      <a href="academic_calendar.php" target="mainFrame">📅 Calendar</a>
-      <a href="post_assignments.php" target="mainFrame">📝 Post Assignments</a>
-      <a href="manage_resources.php" target="mainFrame">📚 Nyenzo za Masomo</a>
-      <a href="manage_contributions.php" target="mainFrame">💰 Contributions</a>
-    </nav>
+    <ul class="sidebar-nav" style="list-style:none;padding:0;">
+
+      <li class="nav-single">
+        <a class="active" href="home.php" target="mainFrame"><i class="bi bi-speedometer2"></i> Home</a>
+      </li>
+
+      <li class="nav-group">
+        <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+          <span class="gleft"><i class="bi bi-clipboard2-check-fill"></i> Academics</span>
+          <i class="bi bi-chevron-down gchev"></i>
+        </div>
+        <ul class="nav-sub">
+          <li><a href="enter_marks_hub.php" target="mainFrame"><i class="bi bi-pencil-square"></i> Enter Marks</a></li>
+          <li><a href="view_exam_results.php" target="mainFrame"><i class="bi bi-bar-chart-steps"></i> View Results</a></li>
+          <li><a href="teacher_subject_analysis.php" target="mainFrame"><i class="bi bi-graph-up"></i> Analysis</a></li>
+          <li><a href="teacher_exam_comparison.php" target="mainFrame"><i class="bi bi-bar-chart-line"></i> Comparison</a></li>
+          <li><a href="teaching_progress.php" target="mainFrame"><i class="bi bi-bookmark-check"></i> Teaching Progress</a></li>
+        </ul>
+      </li>
+
+      <li class="nav-group">
+        <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+          <span class="gleft"><i class="bi bi-book-fill"></i> Teaching Docs</span>
+          <i class="bi bi-chevron-down gchev"></i>
+        </div>
+        <ul class="nav-sub">
+          <li><a href="teaching_docs.php" target="mainFrame"><i class="bi bi-journal-text"></i> All Documents</a></li>
+          <li><a href="manage_resources.php" target="mainFrame"><i class="bi bi-journal-richtext"></i> Nyenzo za Masomo</a></li>
+        </ul>
+      </li>
+
+      <li class="nav-group">
+        <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+          <span class="gleft"><i class="bi bi-megaphone-fill"></i> Communication</span>
+          <i class="bi bi-chevron-down gchev"></i>
+        </div>
+        <ul class="nav-sub">
+          <li><a href="notifications.php" target="mainFrame"><i class="bi bi-bell-fill"></i> Notifications<?php if ($unread_notif > 0): ?> <span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?= $unread_notif ?></span><?php endif; ?></a></li>
+          <li><a href="post_assignments.php" target="mainFrame"><i class="bi bi-journal-check"></i> Post Assignments</a></li>
+          <li><a href="manage_contributions.php" target="mainFrame"><i class="bi bi-cash-stack"></i> Contributions</a></li>
+        </ul>
+      </li>
+
+      <li class="nav-single">
+        <a href="academic_calendar.php" target="mainFrame"><i class="bi bi-calendar3"></i> Calendar</a>
+      </li>
+
+    </ul>
   </aside>
 
   <main class="main">
@@ -117,7 +151,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
   const sidebar = document.getElementById('sidebar');
   const overlay = document.getElementById('overlay');
   const menuBtn = document.getElementById('menuBtn');
-  const links = sidebar.querySelectorAll('a[target="mainFrame"]');
+  const allLinks = sidebar.querySelectorAll('a[target="mainFrame"]');
 
   function openNav(){ sidebar.classList.add('active'); overlay.classList.add('active'); }
   function closeNav(){ sidebar.classList.remove('active'); overlay.classList.remove('active'); }
@@ -128,22 +162,54 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
   });
   overlay.addEventListener('click', closeNav);
 
+  /* ── Group accordion ── */
+  function toggleGroup(hdr) {
+    const sub = hdr.nextElementSibling;
+    const isOpen = sub.classList.contains('open');
+    document.querySelectorAll('.nav-grp-hdr').forEach(h => {
+      h.classList.remove('open');
+      h.nextElementSibling.classList.remove('open');
+    });
+    if (!isOpen) { hdr.classList.add('open'); sub.classList.add('open'); }
+  }
+
+  function openGroupForLink(link) {
+    const sub = link.closest('.nav-sub');
+    if (sub) {
+      sub.classList.add('open');
+      const hdr = sub.previousElementSibling;
+      if (hdr) hdr.classList.add('open');
+    }
+  }
+
   function updateBreadcrumb(href) {
     var bar = document.getElementById('breadcrumbBar');
     if (!bar) return;
-    var link = Array.from(links).find(l => l.getAttribute('href') === href);
+    var link = Array.from(allLinks).find(l => l.getAttribute('href') === href);
     if (!link) { bar.innerHTML = ''; return; }
     var pageText = link.textContent.trim().replace(/\s+/g, ' ');
-    bar.innerHTML = '<span>Teacher</span><span class="bc-sep">›</span><span class="bc-page">' + pageText + '</span>';
+    var sub = link.closest('.nav-sub');
+    var group = sub ? sub.previousElementSibling.querySelector('.gleft') : null;
+    var groupText = group ? group.textContent.trim() : 'Teacher';
+    bar.innerHTML = '<span>' + groupText + '</span><span class="bc-sep">›</span><span class="bc-page">' + pageText + '</span>';
   }
 
-  links.forEach(a => {
-    a.addEventListener('click', () => {
-      links.forEach(x => x.classList.remove('active'));
-      a.classList.add('active');
-      updateBreadcrumb(a.getAttribute('href'));
+  function setActive(href) {
+    allLinks.forEach(l => l.classList.remove('active'));
+    allLinks.forEach(l => {
+      if (l.getAttribute('href') === href) {
+        l.classList.add('active');
+        openGroupForLink(l);
+      }
+    });
+    updateBreadcrumb(href);
+  }
+
+  allLinks.forEach(link => {
+    link.addEventListener('click', function() {
+      setActive(this.getAttribute('href'));
+      sessionStorage.setItem('teacherActivePage', this.getAttribute('href'));
       if (window.innerWidth < 992) closeNav();
-      sessionStorage.setItem('teacherActivePage', a.getAttribute('href'));
     });
   });
 
@@ -156,9 +222,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
     var frame = document.getElementById('mainFrame');
     var target = (saved && saved.trim() !== '') ? saved : 'home.php';
     frame.src = target;
-    links.forEach(function(l){ l.classList.remove('active'); });
-    links.forEach(function(l){ if(l.getAttribute('href') === target) l.classList.add('active'); });
-    updateBreadcrumb(target);
+    setActive(target);
   })();
 
   // ── Profile dropdown ──
@@ -182,9 +246,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
 
   function loadTeacherFrame(url) {
     document.getElementById('mainFrame').src = url;
-    links.forEach(l => l.classList.remove('active'));
-    links.forEach(l => { if (l.getAttribute('href') === url) l.classList.add('active'); });
-    updateBreadcrumb(url);
+    setActive(url);
     sessionStorage.setItem('teacherActivePage', url);
     if (window.innerWidth < 992) closeNav();
   }
