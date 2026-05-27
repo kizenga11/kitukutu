@@ -96,6 +96,7 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
                 <li><a href="unprocessed_results.php" target="mainFrame"><i class="bi bi-hourglass-split"></i> Unprocessed</a></li>
                 <li><a href="admin_exam_comparison.php" target="mainFrame"><i class="bi bi-graph-up"></i> Comparison</a></li>
                 <li><a href="admin_student_report.php" target="mainFrame"><i class="bi bi-file-text"></i> Reports</a></li>
+                <li><a href="bulk_student_results.php" target="mainFrame"><i class="bi bi-files"></i> Multi-Exam Results</a></li>
             </ul>
         </li>
 

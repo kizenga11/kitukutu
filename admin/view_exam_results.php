@@ -76,6 +76,7 @@ tr:nth-child(even){background:#f8f9fa;}
                 <a href="stream_results.php?exam_id=<?= $exam_id ?>&stream=General" class="btn btn-sm" style="background:#17a2b8;color:#fff;">Gen</a>
                 <a href="stream_results.php?exam_id=<?= $exam_id ?>&stream=Vocational" class="btn btn-sm" style="background:#6f42c1;color:#fff;">Voc</a>
                 <?php if($processed){ ?>
+                <a href="bulk_student_results.php?exams%5B%5D=<?= $exam_id ?>" class="btn btn-sm" style="background:#f59e0b;color:#fff;">Multi</a>
                 <button class="btn btn-dr btn-sm" onclick="confirmAction('reprocess','<?= $exam_id ?>','<?= htmlspecialchars($e['exam_name'],ENT_QUOTES) ?>')">Reprocess</button>
                 <?php } ?>
             </td>
