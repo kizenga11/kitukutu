@@ -328,7 +328,7 @@ $streamGpa = $gpaR ? round($gpaR['stream_gpa'], 2) : 0;
             $full_name = trim($full_name);
 
             $subq = mysqli_query($conn,"
-                SELECT sub.subject_code, m.marks
+                SELECT sub.short_name, sub.subject_code, m.marks
                 FROM marks m
                 JOIN subjects sub ON sub.id = m.subject_id
                 JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
@@ -338,7 +338,7 @@ $streamGpa = $gpaR ? round($gpaR['stream_gpa'], 2) : 0;
 
             $subs = [];
             while($sb = mysqli_fetch_assoc($subq)):
-                $subject_code = ucwords(strtolower($sb['subject_code']));
+                $subject_name = $sb['short_name'] ?: ucwords(strtolower($sb['subject_code']));
                 if($mode == 'marks'):
                     $display_value = ($sb['marks'] == 'A' || $sb['marks'] == 'ABSENT') ? 'ABS' : $sb['marks'];
                 else:
@@ -348,7 +348,7 @@ $streamGpa = $gpaR ? round($gpaR['stream_gpa'], 2) : 0;
                         $display_value = grade($sb['marks']);
                     endif;
                 endif;
-                $subs[] = $subject_code . "-" . $display_value;
+                $subs[] = $subject_name . "-" . $display_value;
             endwhile;
 
             $subject_string = implode(" ", $subs);
