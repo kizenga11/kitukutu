@@ -39,7 +39,12 @@ if ($status === 'Approved') {
             VALUES ('$first', '$middle', '$last', '$gender', '$entry_level', '$stream', '$phone')");
 
             $student_id = mysqli_insert_id($conn);
-            $regNo = 'KTTS-' . str_pad($student_id, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+            $year = date('Y');
+            $prefix = 'S.8486/' . $year . '/';
+            $seqQ = mysqli_query($conn,"SELECT MAX(CAST(SUBSTRING(registration_no, LENGTH('$prefix') + 1) AS UNSIGNED)) as max_seq FROM students WHERE registration_no LIKE '$prefix%'");
+            $seqR = mysqli_fetch_assoc($seqQ);
+            $seq = ($seqR['max_seq'] ?? 0) + 1;
+            $regNo = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
             mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$student_id");
 
             // Auto-assign compulsory subjects for this stream

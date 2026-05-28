@@ -23,7 +23,12 @@ if (isset($_POST['register_manual'])) {
 
     if (mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream,parent_phone) VALUES('$first','$second','$last','$sex','$form_level','$stream','$phone')")) {
         $sid = mysqli_insert_id($conn);
-        $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+        $year = date('Y');
+        $prefix = 'S.8486/' . $year . '/';
+        $seqQ = mysqli_query($conn,"SELECT MAX(CAST(SUBSTRING(registration_no, LENGTH('$prefix') + 1) AS UNSIGNED)) as max_seq FROM students WHERE registration_no LIKE '$prefix%'");
+        $seqR = mysqli_fetch_assoc($seqQ);
+        $seq = ($seqR['max_seq'] ?? 0) + 1;
+        $regNo = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
         mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$sid");
         $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$stream') AND LOWER(category)='compulsory'");
         while ($s = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$s['id']}')");
@@ -95,7 +100,12 @@ if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
         if ($f && $l) {
             mysqli_query($conn,"INSERT INTO students(first_name,second_name,last_name,sex,form_level,stream) VALUES('$f','$s','$l','$sx','$fl','$st')");
             $sid = mysqli_insert_id($conn);
-            $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+            $year = date('Y');
+            $prefix = 'S.8486/' . $year . '/';
+            $seqQ = mysqli_query($conn,"SELECT MAX(CAST(SUBSTRING(registration_no, LENGTH('$prefix') + 1) AS UNSIGNED)) as max_seq FROM students WHERE registration_no LIKE '$prefix%'");
+            $seqR = mysqli_fetch_assoc($seqQ);
+            $seq = ($seqR['max_seq'] ?? 0) + 1;
+            $regNo = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
             mysqli_query($conn, "UPDATE students SET registration_no='" . mysqli_real_escape_string($conn, $regNo) . "' WHERE id=$sid");
             $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('$st') AND LOWER(category)='compulsory'");
             while ($srow = mysqli_fetch_assoc($comp)) mysqli_query($conn,"INSERT INTO student_subjects(student_id,subject_id) VALUES('$sid','{$srow['id']}')");

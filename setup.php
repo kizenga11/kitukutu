@@ -781,12 +781,19 @@ $nullReg = mysqli_query($conn, "SELECT id FROM students WHERE registration_no IS
 $countNull = mysqli_num_rows($nullReg);
 if ($countNull > 0) {
     $updated = 0;
+    $year = date('Y');
+    $counter = 1;
+    $prefix = 'S.8486/' . $year . '/';
+    $seqQ = mysqli_query($conn,"SELECT MAX(CAST(SUBSTRING(registration_no, LENGTH('$prefix') + 1) AS UNSIGNED)) as max_seq FROM students WHERE registration_no LIKE '$prefix%'");
+    $seqR = mysqli_fetch_assoc($seqQ);
+    $counter = ($seqR['max_seq'] ?? 0) + 1;
     while ($r = mysqli_fetch_assoc($nullReg)) {
         $sid = (int) $r['id'];
-        $regNo = 'KTTS-' . str_pad($sid, 4, '0', STR_PAD_LEFT) . '-' . date('Y');
+        $regNo = $prefix . str_pad($counter, 4, '0', STR_PAD_LEFT);
         $regNoEsc = mysqli_real_escape_string($conn, $regNo);
         mysqli_query($conn, "UPDATE students SET registration_no='$regNoEsc' WHERE id=$sid AND (registration_no IS NULL OR registration_no = '')");
         $updated++;
+        $counter++;
     }
     $results[] = ['msg'=>"Generated registration_no for $updated existing students.", 'type'=>'ok'];
 } else {
@@ -850,6 +857,158 @@ if (mysqli_num_rows($newIdx) == 0) {
 // Re-add FK constraints
 mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`parent_id`) REFERENCES `parents`(`id`) ON DELETE CASCADE");
 mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`student_id`) REFERENCES `students`(`id`) ON DELETE CASCADE");
+
+// ──────────────────────────────────────────────────────────
+//  35. Create lesson_plan_syllabus table (TIE 2023 Curriculum)
+// ──────────────────────────────────────────────────────────
+$tblCheck = mysqli_query($conn, "SHOW TABLES LIKE 'lesson_plan_syllabus'");
+if (mysqli_num_rows($tblCheck) == 0) {
+    $sql = "CREATE TABLE IF NOT EXISTS `lesson_plan_syllabus` (
+        `id` int NOT NULL AUTO_INCREMENT,
+        `subject_id` int NOT NULL,
+        `form_level` enum('Form One','Form Two','Form Three','Form Four') NOT NULL,
+        `topic_name` varchar(255) NOT NULL,
+        `main_competence` text NOT NULL,
+        `specific_competence` text NOT NULL,
+        `main_activity` text NOT NULL,
+        `action_word` varchar(50) NOT NULL,
+        `learning_activities` text DEFAULT NULL,
+        `suggested_resources` text DEFAULT NULL,
+        `no_of_periods` int DEFAULT NULL,
+        `reference` text,
+        `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (`id`),
+        KEY `idx_lps_subject` (`subject_id`),
+        KEY `idx_lps_form` (`form_level`),
+        CONSTRAINT `fk_lps_subject` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Created `lesson_plan_syllabus` table.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to create `lesson_plan_syllabus`: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`lesson_plan_syllabus` table already exists.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  36. Add learning_activities & suggested_resources to lesson_plan_syllabus
+// ──────────────────────────────────────────────────────────
+if (!columnExists($conn, 'lesson_plan_syllabus', 'learning_activities')) {
+    $sql = "ALTER TABLE `lesson_plan_syllabus` ADD COLUMN `learning_activities` text DEFAULT NULL AFTER `action_word`";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Added `learning_activities` column to `lesson_plan_syllabus`.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add `learning_activities`: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`learning_activities` already exists in `lesson_plan_syllabus`.', 'type'=>'skip'];
+}
+if (!columnExists($conn, 'lesson_plan_syllabus', 'suggested_resources')) {
+    $sql = "ALTER TABLE `lesson_plan_syllabus` ADD COLUMN `suggested_resources` text DEFAULT NULL AFTER `learning_activities`";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Added `suggested_resources` column to `lesson_plan_syllabus`.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add `suggested_resources`: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`suggested_resources` already exists in `lesson_plan_syllabus`.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  37. Add syllabus_id column to topics table
+// ──────────────────────────────────────────────────────────
+if (!columnExists($conn, 'topics', 'syllabus_id')) {
+    $sql = "ALTER TABLE `topics` ADD COLUMN `syllabus_id` int DEFAULT NULL AFTER `topic_name`, ADD KEY `idx_topics_syllabus` (`syllabus_id`)";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Added `syllabus_id` column to `topics`.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add `syllabus_id` to topics: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`syllabus_id` already exists in `topics`.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  38. Seed Mathematics & Chemistry syllabus from mathchemistry_seed.sql
+// ──────────────────────────────────────────────────────────
+$seedFile = __DIR__ . DIRECTORY_SEPARATOR . 'mathchemistry_seed.sql';
+if (file_exists($seedFile)) {
+    $seedSql = file_get_contents($seedFile);
+    // Remove comment lines
+    $seedLines = explode("\n", $seedSql);
+    $seedClean = [];
+    foreach ($seedLines as $line) {
+        $trimmed = trim($line);
+        if ($trimmed === '' || str_starts_with($trimmed, '--') || str_starts_with($trimmed, '#')) {
+            continue;
+        }
+        $seedClean[] = $line;
+    }
+    $seedSql = implode("\n", $seedClean);
+
+    // Split by semicolons (handle quoted strings)
+    $statements = [];
+    $buffer = '';
+    $inString = false;
+    $quoteChar = null;
+    $len = strlen($seedSql);
+    for ($i = 0; $i < $len; $i++) {
+        $ch = $seedSql[$i];
+        $next = $i + 1 < $len ? $seedSql[$i + 1] : '';
+        if (!$inString) {
+            if ($ch === "'" || $ch === '"') {
+                $inString = true;
+                $quoteChar = $ch;
+            } elseif ($ch === ';') {
+                $trimmed = trim($buffer);
+                if ($trimmed !== '') {
+                    $statements[] = $trimmed;
+                }
+                $buffer = '';
+                continue;
+            }
+        } else {
+            if ($ch === '\\' && $next === $quoteChar) {
+                $buffer .= $ch . $next;
+                $i++;
+                continue;
+            }
+            if ($ch === $quoteChar) {
+                $inString = false;
+                $quoteChar = null;
+            }
+        }
+        $buffer .= $ch;
+    }
+    $trimmed = trim($buffer);
+    if ($trimmed !== '') {
+        $statements[] = $trimmed;
+    }
+
+    $seedSuccess = 0;
+    $seedErrors = 0;
+    foreach ($statements as $stmt) {
+        if (stripos($stmt, 'SELECT') === 0) continue;
+        if (mysqli_query($conn, $stmt)) {
+            $seedSuccess++;
+        } else {
+            $seedErrors++;
+            $results[] = ['msg' => 'Seed statement failed: ' . mysqli_error($conn), 'type' => 'err'];
+            $hasError = true;
+        }
+    }
+    if ($seedSuccess > 0) {
+        $affected = mysqli_affected_rows($conn);
+        $results[] = ['msg' => "Seeded Mathematics & Chemistry syllabus from mathchemistry_seed.sql ($affected rows affected).", 'type' => 'ok'];
+    }
+} else {
+    $results[] = ['msg' => 'mathchemistry_seed.sql not found — skipping syllabus seed.', 'type' => 'skip'];
+}
 
 // ──────────────────────────────────────────────────────────
 //  Done
