@@ -77,7 +77,7 @@ if(!$exam){
 
 $results=mysqli_query($conn,"
 SELECT ers.*, 
-CONCAT(st.first_name,' ',st.second_name,' ',st.last_name) AS full_name
+st.registration_no
 FROM exam_results_summary ers
 JOIN students st ON ers.student_id=st.id
 WHERE ers.exam_id='$exam_id'
@@ -99,7 +99,7 @@ $subjects=mysqli_query($conn,"SELECT * FROM subjects ORDER BY stream,subject_nam
 
 <tr class="table-dark">
 <th>Pos</th>
-<th>Name</th>
+<th>Reg No</th>
 
 <?php
 $subject_array=[];
@@ -122,7 +122,7 @@ while($row=mysqli_fetch_assoc($results)){
 
 <tr>
 <td><?= $row['position'] ?></td>
-<td><?= $row['full_name'] ?></td>
+<td><?= htmlspecialchars($row['registration_no']) ?></td>
 
 <?php
 foreach($subject_array as $sub){

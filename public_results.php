@@ -16,7 +16,7 @@ if(!$exam){ header("Location: index.php"); exit(); }
 /* Build per-student results */
 $marks_q = mysqli_query($conn,"
     SELECT s.id AS student_id,
-           CONCAT(s.first_name,' ',s.last_name) AS student_name,
+           s.registration_no,
            s.sex, s.stream,
            AVG(CASE WHEN m.marks REGEXP '^[0-9]+$' THEN CAST(m.marks AS DECIMAL(5,2)) ELSE NULL END) AS avg_mark,
            COUNT(m.id) AS subject_count,
@@ -209,7 +209,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 
   <!-- Filter -->
   <div class="filter-row">
-    <input type="text" id="searchInput" placeholder="Tafuta jina la mwanafunzi..." onkeyup="filterRows()">
+    <input type="text" id="searchInput" placeholder="Tafuta namba ya usajili..." onkeyup="filterRows()">
     <select id="streamFilter" onchange="filterRows()">
       <option value="">Mkondo wote</option>
       <option value="General">General</option>
@@ -241,7 +241,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
     <thead>
       <tr>
         <th>#</th>
-        <th>Jina la Mwanafunzi</th>
+        <th>Namba ya Usajili</th>
         <th>Jinsia</th>
         <th>Mkondo</th>
         <th>Wastani</th>
@@ -267,10 +267,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           default => 'div-na',
       };
     ?>
-      <tr data-name="<?= strtolower($r['student_name']) ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>" data-div="<?= htmlspecialchars($div_raw) ?>">
+      <tr data-reg="<?= strtolower($r['registration_no'] ?? '') ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>" data-div="<?= htmlspecialchars($div_raw) ?>">
         <td data-label="#"><span class="pos-num"><?= $pos++ ?></span></td>
-        <td data-label="Jina">
-          <div class="stu-name"><?= htmlspecialchars($r['student_name']) ?></div>
+        <td data-label="Namba">
+          <div class="stu-name"><?= htmlspecialchars($r['registration_no'] ?? '') ?></div>
           <div class="stu-meta"><?= $r['subject_count'] ?> masomo</div>
         </td>
         <td data-label="Jinsia"><span class="sex-badge sex-<?= $r['sex'] ?>"><?= $r['sex'] ?></span></td>
@@ -298,11 +298,11 @@ function filterRows(){
   var sex    = document.getElementById('sexFilter').value;
   var div    = document.getElementById('divFilter').value;
   document.querySelectorAll('#resultsTable tbody tr').forEach(function(tr){
-    var name = tr.dataset.name  || '';
-    var s    = tr.dataset.stream|| '';
-    var g    = tr.dataset.sex   || '';
-    var d    = tr.dataset.div   || '';
-    var show = name.includes(search) && (!stream || s===stream) && (!sex || g===sex) && (!div || d===div);
+    var reg  = tr.dataset.reg    || '';
+    var s    = tr.dataset.stream || '';
+    var g    = tr.dataset.sex    || '';
+    var d    = tr.dataset.div    || '';
+    var show = reg.includes(search) && (!stream || s===stream) && (!sex || g===sex) && (!div || d===div);
     tr.style.display = show ? '' : 'none';
   });
 }
