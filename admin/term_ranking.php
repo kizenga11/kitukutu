@@ -219,7 +219,7 @@ tr:nth-child(even){background:#f8f9fc;}
 
         // Collect all subjects enrolled by any student in this form level
         $all_subs_q = mysqli_query($conn,"
-            SELECT DISTINCT sub.id, sub.subject_name, sub.subject_code
+            SELECT DISTINCT sub.short_name, sub.subject_name, sub.subject_code
             FROM student_subjects ss
             JOIN subjects sub ON sub.id = ss.subject_id
             WHERE ss.student_id IN (
@@ -228,42 +228,45 @@ tr:nth-child(even){background:#f8f9fc;}
                 JOIN students s ON s.id = m.student_id
                 WHERE m.exam_id IN (".implode(',',$exam_ids).") $flFilterSql
             )
-            ORDER BY sub.subject_code
+            ORDER BY sub.short_name
         ");
         $all_subject_codes = [];
         while ($as = mysqli_fetch_assoc($all_subs_q)) {
-            $all_subject_codes[$as['subject_code']] = $as['subject_name'];
+            $sn = $as['short_name'] ?: $as['subject_code'];
+            if (!isset($all_subject_codes[$sn])) {
+                $all_subject_codes[$sn] = $as['subject_name'];
+            }
         }
 
         while ($st = mysqli_fetch_assoc($students_q)):
             $sid = $st['id'];
 
             $marks_q = mysqli_query($conn,"
-                SELECT m.subject_id, sub.subject_name, sub.subject_code, m.marks
+                SELECT m.subject_id, sub.subject_name, sub.short_name, sub.subject_code, m.marks
                 FROM marks m
                 JOIN subjects sub ON sub.id = m.subject_id
                 WHERE m.student_id = '$sid'
                   AND m.exam_id IN (".implode(',',$exam_ids).")
                   AND m.subject_id IN (SELECT subject_id FROM student_subjects WHERE student_id = '$sid')
-                ORDER BY sub.subject_code, m.exam_id
+                ORDER BY sub.short_name, m.exam_id
             ");
 
             $subject_groups = [];
             while ($mr = mysqli_fetch_assoc($marks_q)):
-                $subj_id = $mr['subject_id'];
+                $sn = $mr['short_name'] ?: $mr['subject_code'];
                 $raw = $mr['marks'];
                 if ($raw === 'A' || $raw === '' || $raw === null) continue;
                 if (!is_numeric($raw)) continue;
-                if (!isset($subject_groups[$subj_id])) {
-                    $subject_groups[$subj_id] = [
+                if (!isset($subject_groups[$sn])) {
+                    $subject_groups[$sn] = [
                         'name' => $mr['subject_name'],
-                        'code' => $mr['subject_code'],
+                        'code' => $sn,
                         'marks_sum' => 0,
                         'count' => 0,
                     ];
                 }
-                $subject_groups[$subj_id]['marks_sum'] += (float)$raw;
-                $subject_groups[$subj_id]['count']++;
+                $subject_groups[$sn]['marks_sum'] += (float)$raw;
+                $subject_groups[$sn]['count']++;
             endwhile;
 
             $subject_data = [];
