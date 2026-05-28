@@ -324,7 +324,7 @@ if (!$res) {
     $name = trim($st['first_name'] . ' ' . ($st['second_name'] ? $st['second_name'].' ' : '') . $st['last_name']);
     $phone = $st['parent_phone'] ?? '';
     $avg = number_format((float)$st['average_marks'],1);
-    $div = $st['division'] ?: '-';
+    $div = $st['division'] !== '' && $st['division'] !== null ? $st['division'] : '-';
     $pts = (int)$st['total_points'];
     $pos = (int)$st['position'];
     $fl_display = str_replace('Form ','F. ',$st['form_level']);

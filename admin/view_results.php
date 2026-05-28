@@ -536,7 +536,7 @@ $schoolInfo = $summary_json['school'] ?? null;
 
             $subject_string = implode(" ", $subs);
             $avg_grade = grade($st['average_marks']);
-            $div_display = $st['division'] ?: '-';
+            $div_display = $st['division'] !== '' && $st['division'] !== null ? $st['division'] : '-';
         ?>
         <tr>
             <td data-label="#" class="pos-val"><?= (int)$st['position'] ?></td>
