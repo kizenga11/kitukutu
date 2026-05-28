@@ -73,6 +73,7 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
         <ul class="nav-sub">
           <li><a href="teaching_docs.php" target="mainFrame"><i class="bi bi-journal-text"></i> All Documents</a></li>
           <li><a href="manage_resources.php" target="mainFrame"><i class="bi bi-journal-richtext"></i> Nyenzo za Masomo</a></li>
+          <li><a href="generate_lesson_plan.php" target="mainFrame"><i class="bi bi-file-earmark-text"></i> Generate Lesson Plan</a></li>
         </ul>
       </li>
 
@@ -84,7 +85,6 @@ $unread_notif = intval(mysqli_fetch_assoc(mysqli_query($conn,"
         <ul class="nav-sub">
           <li><a href="notifications.php" target="mainFrame"><i class="bi bi-bell-fill"></i> Notifications<?php if ($unread_notif > 0): ?> <span style="background:#ef4444;color:#fff;border-radius:20px;font-size:10px;padding:1px 7px;margin-left:auto;font-weight:700"><?= $unread_notif ?></span><?php endif; ?></a></li>
           <li><a href="post_assignments.php" target="mainFrame"><i class="bi bi-journal-check"></i> Post Assignments</a></li>
-          <li><a href="manage_contributions.php" target="mainFrame"><i class="bi bi-cash-stack"></i> Contributions</a></li>
         </ul>
       </li>
 
