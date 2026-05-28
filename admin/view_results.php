@@ -429,9 +429,22 @@ $schoolInfo = $summary_json['school'] ?? null;
         <div class="summary-grid">
             <?php if($schoolInfo): $sc=$schoolInfo;
             $schoolGpaLive = 0;
-            $gpaQL = mysqli_query($conn,"SELECT SUM(total_points) as pts_sum, COUNT(*) as cnt FROM exam_results_summary WHERE exam_id='$exam_id' AND division != '' AND division IS NOT NULL");
+            $gpaQL = mysqli_query($conn,"SELECT ROUND(AVG(gpa), 2) as school_gpa FROM (
+                SELECT AVG(CASE 
+                    WHEN CAST(m.marks AS DECIMAL(5,1)) >= 75 THEN 1
+                    WHEN CAST(m.marks AS DECIMAL(5,1)) >= 65 THEN 2
+                    WHEN CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 3
+                    WHEN CAST(m.marks AS DECIMAL(5,1)) >= 30 THEN 4
+                    ELSE 5
+                END) as gpa
+                FROM marks m
+                JOIN exam_results_summary ers ON ers.student_id = m.student_id AND ers.exam_id = m.exam_id
+                JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
+                WHERE m.exam_id = '$exam_id' AND m.marks != 'A' AND ers.division != '' AND ers.division IS NOT NULL
+                GROUP BY m.student_id
+            ) t");
             $gpaRL = mysqli_fetch_assoc($gpaQL);
-            if($gpaRL && $gpaRL['cnt'] > 0) $schoolGpaLive = round($gpaRL['pts_sum'] / $gpaRL['cnt'], 2);
+            if($gpaRL && $gpaRL['school_gpa']) $schoolGpaLive = round($gpaRL['school_gpa'], 2);
             ?>
             <div class="stat-item">
                 <div class="stat-value"><?= number_format((float)$sc['school_avg'],2) ?></div>

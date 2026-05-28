@@ -50,6 +50,7 @@ $all_div_data = [];
 $all_subj_grades = [];
 $all_school_totals = 0;
 $all_school_sum = 0;
+$all_student_gpas = [];
 
 foreach ($form_levels as $form_level) {
     // Get students for this form level (use student's current form_level)
@@ -84,6 +85,8 @@ foreach ($form_levels as $form_level) {
             $data[]=["student_id"=>$id,"points"=>0,"avg"=>$avg,"grade"=>$grd,"division"=>"","total"=>$total,"form_level"=>$form_level];
         } else {
             $div = division($total_points);
+            $student_gpa = round(array_sum($pts) / $count, 2);
+            $all_student_gpas[] = $student_gpa;
             $data[]=["student_id"=>$id,"points"=>$total_points,"avg"=>$avg,"grade"=>$grd,"division"=>$div,"total"=>$total,"form_level"=>$form_level];
         }
     }
@@ -205,13 +208,8 @@ $schoolTotal = $all_school_totals;
 $schoolAvg = $schoolTotal > 0 ? round($all_school_sum / $schoolTotal, 2) : 0;
 $schoolGrade = grade($schoolAvg);
 
-// Compute School GPA: avg of total_points (best 7) for students with a division
-$schoolGpa = 0;
-$gpaQ = mysqli_query($conn,"SELECT SUM(total_points) as pts_sum, COUNT(*) as cnt FROM exam_results_summary WHERE exam_id='$exam_id' AND division != '' AND division IS NOT NULL");
-$gpaR = mysqli_fetch_assoc($gpaQ);
-if($gpaR && $gpaR['cnt'] > 0){
-    $schoolGpa = round($gpaR['pts_sum'] / $gpaR['cnt'], 2);
-}
+// Compute School GPA: avg of per-student GPA (each 1-5) for students with a division
+$schoolGpa = !empty($all_student_gpas) ? round(array_sum($all_student_gpas) / count($all_student_gpas), 2) : 0;
 
 $summaryJson = json_encode([
     'divisions' => $divData,

@@ -206,16 +206,30 @@ while($d=mysqli_fetch_assoc($divQ)){
     $divisions[$dn]['total']+=(int)$d['c'];
 }
 
-$schoolQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total, AVG(average_marks) as avg, SUM(total_points) as pts_sum FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter'"));
+$schoolQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total, AVG(average_marks) as avg FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter'"));
 $streamTotal = (int)($schoolQ['total']??0);
 $streamAvg = $streamTotal > 0 ? round($schoolQ['avg'],2) : 0;
 $streamGrade = grade($streamAvg);
 
-$divCount = (int)($schoolQ['pts_sum'] ?? 0);
-$gpaQ = mysqli_query($conn,"SELECT COUNT(*) as cnt FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter' AND ers.division!='' AND ers.division IS NOT NULL");
+$gpaQ = mysqli_query($conn,"SELECT ROUND(AVG(gpa), 2) as stream_gpa FROM (
+    SELECT AVG(CASE 
+        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 75 THEN 1
+        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 65 THEN 2
+        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 3
+        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 30 THEN 4
+        ELSE 5
+    END) as gpa
+    FROM marks m
+    JOIN exam_results_summary ers ON ers.student_id = m.student_id AND ers.exam_id = m.exam_id
+    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
+    JOIN students s ON s.id = m.student_id
+    WHERE m.exam_id = '$exam_id' AND m.marks != 'A' 
+        AND ers.division != '' AND ers.division IS NOT NULL
+        AND s.stream = '$stream_filter'
+    GROUP BY m.student_id
+) t");
 $gpaR = mysqli_fetch_assoc($gpaQ);
-$studentsWithDiv = (int)($gpaR['cnt']??0);
-$streamGpa = $studentsWithDiv > 0 && $divCount > 0 ? round($divCount / $studentsWithDiv, 2) : 0;
+$streamGpa = $gpaR ? round($gpaR['stream_gpa'], 2) : 0;
 ?>
 
 <div class="summary-row">
