@@ -63,58 +63,16 @@ $exam_count = count($exams);
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Term Ranking — Best Students</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<title>Term Ranking</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{background:#f0f2f5;font-family:system-ui,-apple-system,sans-serif;padding:16px;font-size:13px;color:#1a1a2e;}
-.container{max-width:1300px;margin:0 auto;}
-.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.06);border:1px solid #eef0f4;}
-.form-label{font-size:12px;font-weight:600;color:#374151;margin-bottom:4px;display:block;}
-.form-select,.form-control{width:100%;padding:8px 10px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;background:#fff;}
-.form-select:focus,.form-control:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.12);}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;}
-.btn-primary{background:#6366f1;color:#fff;}
-.btn-primary:hover{background:#4f46e5;}
-.btn-success{background:#10b981;color:#fff;}
-.btn-info{background:#06b6d4;color:#fff;}
-.btn-outline{background:transparent;color:#6b7280;border:1.5px solid #d1d5db;}
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th,td{padding:7px 6px;border:1px solid #e5e7eb;text-align:center;vertical-align:middle;}
-th{background:#1a2b4c;color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
-tr:nth-child(even){background:#f8f9fc;}
-@media print{
-    body{background:#fff;padding:0;margin:0;font-size:10px;}
-    .no-print{display:none!important;}
-    .container{max-width:100%;padding:0;}
-    th{background:#1a2b4c!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-    table{font-size:9px;}
-    th,td{padding:4px 3px;}
-}
+@media print{.no-print{display:none!important;}}
 </style>
 </head>
 <body>
-<div class="container">
-
-<div class="card no-print" style="background:linear-gradient(135deg,#1a2b4c,#2c3e6b);color:#fff;">
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <img src="../assets/logo.png" style="width:48px;height:48px;border-radius:8px;object-fit:cover;">
-            <div>
-                <h2 style="font-size:16px;font-weight:700;">Term Ranking — Best Students</h2>
-                <p style="font-size:12px;opacity:.8;">Aggregate marks across all term exams, compute subject averages, rank students</p>
-            </div>
-        </div>
-        <button onclick="history.back()" class="btn btn-outline" style="background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.2);">← Back</button>
-    </div>
-</div>
 
 <form method="GET" class="no-print">
-<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px;">
-    <div style="flex:1;min-width:180px;">
-        <label class="form-label">Academic Year</label>
-        <select name="academic_year_id" class="form-select" onchange="this.form.submit()">
+    <label>Academic Year
+        <select name="academic_year_id" onchange="this.form.submit()">
             <option value="">Select Year</option>
             <?php if($academic_years) while($yr=mysqli_fetch_assoc($academic_years)): ?>
             <option value="<?= $yr['id'] ?>" <?= $selected_year_id==$yr['id']?'selected':'' ?>>
@@ -123,11 +81,10 @@ tr:nth-child(even){background:#f8f9fc;}
             </option>
             <?php endwhile; ?>
         </select>
-    </div>
+    </label>
 
-    <div style="flex:1;min-width:180px;">
-        <label class="form-label">Term</label>
-        <select name="term_id" class="form-select" onchange="this.form.submit()">
+    <label>Term
+        <select name="term_id" onchange="this.form.submit()">
             <option value="">Select Term</option>
             <?php foreach($terms as $t): ?>
             <option value="<?= $t['id'] ?>" <?= $selected_term_id==$t['id']?'selected':'' ?>>
@@ -136,55 +93,25 @@ tr:nth-child(even){background:#f8f9fc;}
             </option>
             <?php endforeach; ?>
         </select>
-    </div>
+    </label>
 
-    <div style="flex:1;min-width:150px;">
-        <label class="form-label">Form Level</label>
-        <select name="form_level" class="form-select">
+    <label>Form Level
+        <select name="form_level">
             <option value="">All Forms</option>
             <?php foreach(['Form One','Form Two','Form Three','Form Four'] as $fl): ?>
             <option value="<?= $fl ?>" <?= $form_level_filter===$fl?'selected':'' ?>><?= str_replace('Form ','F. ',$fl) ?></option>
             <?php endforeach; ?>
         </select>
-    </div>
+    </label>
 
-    <div>
-        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Load Ranking</button>
-    </div>
-</div>
+    <button type="submit">Load Ranking</button>
 </form>
 
 <?php if (!$selected_term_id): ?>
-<div class="card">
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:8px;opacity:.25;"></i>
-        Select academic year and term to load ranking
-    </div>
-</div>
+    <p class="no-print">Select academic year and term to load ranking</p>
 <?php elseif (empty($exams)): ?>
-<div class="card">
-    <div class="text-center py-5 text-muted">
-        <i class="bi bi-exclamation-triangle" style="font-size:2.5rem;display:block;margin-bottom:8px;opacity:.25;"></i>
-        No exams found for this term (<?= date('d M Y',strtotime($term['opening_date'])) ?> – <?= date('d M Y',strtotime($term['closing_date'])) ?>)
-    </div>
-</div>
+    <p class="no-print">No exams found for this term</p>
 <?php else: ?>
-
-<div class="card">
-    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-        <div>
-            <strong style="font-size:14px;">
-                <?= htmlspecialchars($term['term_name'] ?? '') ?>
-                — <?= count($exams) ?> exam(s)
-            </strong>
-            <span style="font-size:11px;color:#6b7280;margin-left:8px;">
-                <?php foreach($exams as $i=>$ex): ?>
-                    <?= $i>0?', ':'' ?><?= htmlspecialchars($ex['exam_name']) ?>
-                <?php endforeach; ?>
-            </span>
-        </div>
-        <button onclick="window.print()" class="btn btn-info" style="color:#fff;"><i class="bi bi-printer"></i> Print</button>
-    </div>
 
     <?php
     $form_levels = [];
@@ -217,7 +144,6 @@ tr:nth-child(even){background:#f8f9fc;}
 
         $ranking_data = [];
 
-        // Collect all subjects enrolled by any student in this form level
         $all_subs_q = mysqli_query($conn,"
             SELECT DISTINCT sub.short_name, sub.subject_name, sub.subject_code
             FROM student_subjects ss
@@ -335,14 +261,9 @@ tr:nth-child(even){background:#f8f9fc;}
 
         ksort($all_subject_codes);
     ?>
-        <h5 style="margin:16px 0 8px;font-weight:700;">
-            <?= str_replace('Form ','F. ',$form_level) ?>
-            <span style="font-size:11px;color:#6b7280;font-weight:400;">
-                — <?= count($ranking_data) ?> student(s)
-            </span>
-        </h5>
+        <h4><?= str_replace('Form ','F. ',$form_level) ?> — <?= count($ranking_data) ?> student(s)</h4>
 
-        <table>
+        <table border="1">
             <tr>
                 <th>#</th>
                 <th>Name</th>
@@ -354,23 +275,23 @@ tr:nth-child(even){background:#f8f9fc;}
                 <th>Points</th>
                 <th>Div</th>
                 <?php foreach ($all_subject_codes as $code => $sname): ?>
-                <th title="<?= htmlspecialchars($sname) ?>"><?= htmlspecialchars($code) ?></th>
+                <th><?= htmlspecialchars($code) ?></th>
                 <?php endforeach; ?>
             </tr>
 
             <?php if (empty($ranking_data)): ?>
-            <tr><td colspan="<?= 9 + count($all_subject_codes) ?>" class="text-center py-4 text-muted">No data</td></tr>
+            <tr><td colspan="<?= 9 + count($all_subject_codes) ?>">No data</td></tr>
             <?php else: foreach ($ranking_data as $rd):
                 $st = $rd['student'];
             ?>
             <tr>
-                <td style="font-weight:700;"><?= $rd['rank'] ?></td>
-                <td style="text-align:left;font-weight:600;"><?= htmlspecialchars($st['full_name']) ?></td>
+                <td><?= $rd['rank'] ?></td>
+                <td><?= htmlspecialchars($st['full_name']) ?></td>
                 <td><?= $st['sex'] == 'Male' ? 'M' : 'F' ?></td>
                 <td><?= htmlspecialchars($st['stream']) ?></td>
                 <td><?= $rd['subject_count'] ?></td>
-                <td style="font-weight:700;"><?= number_format($rd['overall_avg'], 2) ?></td>
-                <td style="font-weight:700;"><?= $rd['grade'] ?></td>
+                <td><?= number_format($rd['overall_avg'], 2) ?></td>
+                <td><?= $rd['grade'] ?></td>
                 <td><?= $rd['total_points'] ?: '-' ?></td>
                 <td><?= $rd['division'] ?: '-' ?></td>
                 <?php
@@ -380,12 +301,9 @@ tr:nth-child(even){background:#f8f9fc;}
                     if (isset($subj_map[$code])):
                         $s = $subj_map[$code];
                 ?>
-                <td style="font-size:10px;" title="<?= htmlspecialchars($s['name']) ?>: <?= number_format($s['avg'],1) ?> (<?= $s['grade'] ?>)">
-                    <span style="font-weight:700;"><?= number_format($s['avg'],1) ?></span>
-                    <span style="color:#6b7280;"><?= $s['grade'] ?></span>
-                </td>
+                <td><?= number_format($s['avg'],1) ?> <?= $s['grade'] ?></td>
                 <?php else: ?>
-                <td style="color:#d1d5db;" title="Not taken">—</td>
+                <td>—</td>
                 <?php endif; endforeach; ?>
             </tr>
             <?php endforeach; endif; ?>
@@ -406,17 +324,10 @@ tr:nth-child(even){background:#f8f9fc;}
             if (($div_counts[$d] ?? 0) > 0) $div_parts[] = "Div $d: {$div_counts[$d]}";
         }
         ?>
-
-        <div style="margin-top:8px;font-size:11px;color:#6b7280;">
-            Form Avg: <?= number_format($form_avg, 2) ?> (<?= $form_grade ?>) —
-            <?= implode(' | ', $div_parts) ?> —
-            Total: <?= $total ?>
-        </div>
+        <p>Form Avg: <?= number_format($form_avg, 2) ?> (<?= $form_grade ?>) — <?= implode(' | ', $div_parts) ?> — Total: <?= $total ?></p>
 
     <?php endforeach; ?>
-</div>
 <?php endif; ?>
 
-</div>
 </body>
 </html>
