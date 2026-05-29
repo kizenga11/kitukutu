@@ -128,21 +128,22 @@ $schoolInfo = $summary_json['school'] ?? null;
     </form>
 </div>
 
-<h4>Division Summary</h4>
-<table border="1">
-    <tr><th>Div</th><th>Boys</th><th>Girls</th><th>Total</th></tr>
+<div style="display:flex;justify-content:center;margin:10px 0;">
+  <table border="1" style="border-collapse:collapse;width:60%;min-width:280px;text-align:center;font-size:13px;">
+    <tr style="background:#0f2744;color:#fff;"><th style="padding:8px;">Div</th><th style="padding:8px;">Boys</th><th style="padding:8px;">Girls</th><th style="padding:8px;">Total</th></tr>
     <?php foreach($divOrder as $d):
         if(!isset($divisions[$d])) continue;
         $dd = $divisions[$d];
     ?>
     <tr>
-        <td><strong><?= $d ?></strong></td>
-        <td><?= (int)($dd['boys']??0) ?></td>
-        <td><?= (int)($dd['girls']??0) ?></td>
-        <td><strong><?= (int)($dd['total']??0) ?></strong></td>
+        <td style="padding:6px;"><strong><?= $d ?></strong></td>
+        <td style="padding:6px;"><?= (int)($dd['boys']??0) ?></td>
+        <td style="padding:6px;"><?= (int)($dd['girls']??0) ?></td>
+        <td style="padding:6px;"><strong><?= (int)($dd['total']??0) ?></strong></td>
     </tr>
     <?php endforeach; ?>
-</table>
+  </table>
+</div>
 
 <h4>School Summary</h4>
 <?php if($schoolInfo): $sc=$schoolInfo;
