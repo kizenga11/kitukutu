@@ -63,7 +63,6 @@ function grade($m){
   .print-header .line2{font-size:16pt;font-weight:700;}
   .print-header .line3{font-size:11pt;font-weight:400;}
   .print-header .line4{font-size:13pt;font-weight:700;margin-top:8px;}
-  .print-header .line5{font-size:10pt;font-weight:400;margin-top:4px;}
   .subject-summary-page{page-break-before:always;}
 }
 @media screen and (max-width:768px){table{display:block;overflow-x:auto;white-space:nowrap;}}
@@ -73,11 +72,10 @@ function grade($m){
 <body>
 
 <div class="print-header">
-  <div class="line1">HALMASHAURI YA WILAYA YA IRAMBA</div>
-  <div class="line2">SHULE YA AMALI KITUKUTU</div>
-  <div class="line3">S.L.P 155, IRAMBA</div>
+  <div class="line1">IRAMBA DISTRICT COUNCIL</div>
+  <div class="line2">AMALI KITUKUTU SECONDARY SCHOOL</div>
+  <div class="line3">P.O BOX 155, IRAMBA</div>
   <div class="line4"><?= strtoupper(htmlspecialchars($exam_name)) ?></div>
-  <div class="line5">MATOKEO YA WANAFUNZI</div>
 </div>
 
 <?php if(isset($_SESSION['success'])): ?>
@@ -87,8 +85,8 @@ function grade($m){
 </div>
 <?php unset($_SESSION['success']); endif; ?>
 
-<h3><?= htmlspecialchars($school_name) ?></h3>
-<h4><?= htmlspecialchars($exam_name) ?></h4>
+<h3 class="no-print"><?= htmlspecialchars($school_name) ?></h3>
+<h4 class="no-print"><?= htmlspecialchars($exam_name) ?></h4>
 
 <p class="no-print">
     <button onclick="history.back()">← Back</button>
