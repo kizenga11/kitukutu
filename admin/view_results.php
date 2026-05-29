@@ -56,11 +56,29 @@ function grade($m){
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Exam Results - <?= htmlspecialchars($exam_name) ?></title>
 <style>
-@media print{.no-print{display:none!important;}}
+@media print{
+  .no-print{display:none!important;}
+  .print-header{display:block!important;text-align:center;margin-bottom:16px;}
+  .print-header .line1{font-size:11pt;font-weight:400;}
+  .print-header .line2{font-size:16pt;font-weight:700;}
+  .print-header .line3{font-size:11pt;font-weight:400;}
+  .print-header .line4{font-size:13pt;font-weight:700;margin-top:8px;}
+  .print-header .line5{font-size:10pt;font-weight:400;margin-top:4px;}
+  .subject-summary-page{page-break-before:always;}
+}
 @media screen and (max-width:768px){table{display:block;overflow-x:auto;white-space:nowrap;}}
+.print-header{display:none;}
 </style>
 </head>
 <body>
+
+<div class="print-header">
+  <div class="line1">HALMASHAURI YA WILAYA YA IRAMBA</div>
+  <div class="line2">SHULE YA AMALI KITUKUTU</div>
+  <div class="line3">S.L.P 155, IRAMBA</div>
+  <div class="line4"><?= strtoupper(htmlspecialchars($exam_name)) ?></div>
+  <div class="line5">MATOKEO YA WANAFUNZI</div>
+</div>
 
 <?php if(isset($_SESSION['success'])): ?>
 <div style="background:#e8f8e8;color:#27ae60;border:1px solid #c3e6cb;padding:8px 12px;font-size:12px;margin-bottom:10px;">
@@ -258,6 +276,7 @@ $schoolInfo = $summary_json['school'] ?? null;
 </table>
 </div>
 
+<div class="subject-summary-page">
 <div style="text-align:center;margin-top:20px;">
   <span style="background:#0f2744;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:700;display:inline-block;">Subject Performance Summary</span>
 </div>
@@ -375,6 +394,7 @@ unset($sg);
   </tr>
   <?php endforeach; ?>
 </table>
+</div>
 </div>
 <?php endif; ?>
 
