@@ -22,7 +22,7 @@ $marks_q = mysqli_query($conn,"
            COUNT(m.id) AS subject_count,
            ers.division
     FROM students s
-    JOIN marks m ON m.student_id=s.id AND m.exam_id='$exam_id'
+    JOIN marks m ON m.student_id=s.id AND m.exam_id='$exam_id' AND s.is_active=1
     LEFT JOIN exam_results_summary ers ON ers.student_id=s.id AND ers.exam_id='$exam_id'
     GROUP BY s.id, ers.division
     HAVING subject_count > 0
@@ -32,6 +32,25 @@ $marks_q = mysqli_query($conn,"
 $results = [];
 while($r = mysqli_fetch_assoc($marks_q)) $results[] = $r;
 $total_students = count($results);
+
+/* Fetch all subject-level marks for all students in this exam */
+$all_marks = [];
+$subjects_q = mysqli_query($conn, "
+    SELECT m.student_id, m.marks, sub.subject_name, sub.id AS subject_id
+    FROM marks m
+    JOIN subjects sub ON sub.id = m.subject_id
+    JOIN students s ON s.id = m.student_id AND s.is_active=1
+    WHERE m.exam_id='$exam_id'
+    ORDER BY m.student_id, sub.subject_name
+");
+while ($sm = mysqli_fetch_assoc($subjects_q)) {
+    $sid = $sm['student_id'];
+    $all_marks[$sid][] = [
+        'subject' => $sm['subject_name'],
+        'marks'   => $sm['marks'],
+        'grade'   => gradeFromAvg((float)$sm['marks'])[0],
+    ];
+}
 
 /* Grade helper */
 function gradeFromAvg($avg){
@@ -59,6 +78,7 @@ if($exam['end_date'] && $exam['end_date'] != $exam['start_date']) $date_str .= '
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($exam['exam_name']) ?> – Matokeo | Amali Kitukutu</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 <style>
 :root{
   --primary:#0f2b4b;--primary-light:#1e4a6d;--accent:#f4b400;
@@ -130,6 +150,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
 .div-IV {background:#ffedd5;color:#9a3412;}
 .div-0  {background:#fee2e2;color:#991b1b;}
 .div-na {background:#f3f4f6;color:#6b7280;}
+
+/* Subjects toggle */
+.btn-subjects{background:var(--primary);color:#fff;border:none;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;transition:background .15s;}
+.btn-subjects:hover{background:var(--primary-light);}
+.btn-subjects.active{background:var(--accent);color:var(--primary);}
+.subjects-row{background:#f8fafc;}
+.subjects-inner{padding:14px 20px;}
+.subjects-table{width:100%;border-collapse:collapse;font-size:13px;}
+.subjects-table thead th{background:var(--primary);color:#fff;padding:7px 12px;font-size:11px;text-align:left;font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.subjects-table tbody tr{border-bottom:1px solid var(--border);}
+.subjects-table tbody tr:last-child{border-bottom:none;}
+.subjects-table td{padding:6px 12px;font-size:13px;}
+.mark-cell{font-weight:700;}
+@media(max-width:600px){
+  .subjects-inner{padding:10px;}
+  .subjects-table thead{display:none;}
+  .subjects-table tbody tr{display:block;padding:6px 8px;border:1px solid var(--border);border-radius:8px;margin-bottom:4px;}
+  .subjects-table td{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--border);font-size:12px;}
+  .subjects-table td:last-child{border-bottom:none;}
+  .subjects-table td::before{content:attr(data-label);font-weight:600;color:var(--muted);}
+}
 
 /* Empty */
 .empty{text-align:center;padding:60px 20px;color:var(--muted);}
@@ -247,10 +288,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         <th>Wastani</th>
         <th>Daraja</th>
         <th>Division</th>
+        <th style="text-align:center;">Masomo</th>
       </tr>
     </thead>
     <tbody>
     <?php $pos = 1; foreach($results as $r):
+      $sid = $r['student_id'];
       $avg = round(floatval($r['avg_mark']), 1);
       [$grade, $gcol, $gbg] = gradeFromAvg($avg);
       $bar_pct = min(100, $avg);
@@ -266,8 +309,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
           '0'   => 'div-0',
           default => 'div-na',
       };
+      $has_subjects = isset($all_marks[$sid]) && count($all_marks[$sid]) > 0;
     ?>
-      <tr data-reg="<?= strtolower($r['registration_no'] ?? '') ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>" data-div="<?= htmlspecialchars($div_raw) ?>">
+      <tr class="stu-row" data-reg="<?= strtolower($r['registration_no'] ?? '') ?>" data-stream="<?= $stream_label ?>" data-sex="<?= $r['sex'] ?>" data-div="<?= htmlspecialchars($div_raw) ?>" data-student="<?= $sid ?>">
         <td data-label="#"><span class="pos-num"><?= $pos++ ?></span></td>
         <td data-label="Namba">
           <div class="stu-name"><?= htmlspecialchars($r['registration_no'] ?? '') ?></div>
@@ -283,6 +327,37 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-h
         </td>
         <td data-label="Daraja"><span class="grade-pill" style="background:<?= $gbg ?>;color:<?= $gcol ?>"><?= $grade ?></span></td>
         <td data-label="Division"><span class="div-pill <?= $div_css ?>"><?= htmlspecialchars($div_display) ?></span></td>
+        <td data-label="Masomo" style="text-align:center;">
+          <?php if ($has_subjects): ?>
+          <button class="btn-subjects" onclick="toggleSubjects(<?= $sid ?>)"><i class="bi bi-eye"></i></button>
+          <?php endif; ?>
+        </td>
+      </tr>
+      <tr class="subjects-row" id="subjects-<?= $sid ?>" style="display:none;">
+        <td colspan="8" style="padding:0;">
+          <div class="subjects-inner">
+            <table class="subjects-table">
+              <thead>
+                <tr>
+                  <th>Somo</th>
+                  <th>Alama</th>
+                  <th>Daraja</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php if ($has_subjects): ?>
+                <?php foreach ($all_marks[$sid] as $mk): ?>
+                <tr>
+                  <td data-label="Somo"><?= htmlspecialchars($mk['subject']) ?></td>
+                  <td data-label="Alama" class="mark-cell"><?= (float)$mk['marks'] ?></td>
+                  <td data-label="Daraja"><span class="grade-pill" style="background:<?= gradeFromAvg((float)$mk['marks'])[2] ?>;color:<?= gradeFromAvg((float)$mk['marks'])[1] ?>"><?= $mk['grade'] ?></span></td>
+                </tr>
+                <?php endforeach; ?>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+        </td>
       </tr>
     <?php endforeach; ?>
     </tbody>
@@ -297,14 +372,27 @@ function filterRows(){
   var stream = document.getElementById('streamFilter').value;
   var sex    = document.getElementById('sexFilter').value;
   var div    = document.getElementById('divFilter').value;
-  document.querySelectorAll('#resultsTable tbody tr').forEach(function(tr){
+  document.querySelectorAll('.stu-row').forEach(function(tr){
     var reg  = tr.dataset.reg    || '';
     var s    = tr.dataset.stream || '';
     var g    = tr.dataset.sex    || '';
     var d    = tr.dataset.div    || '';
     var show = reg.includes(search) && (!stream || s===stream) && (!sex || g===sex) && (!div || d===div);
     tr.style.display = show ? '' : 'none';
+    var sid = tr.dataset.student;
+    if (sid) {
+      var subRow = document.getElementById('subjects-' + sid);
+      if (subRow) subRow.style.display = show && subRow.style.display !== 'none' ? '' : 'none';
+    }
   });
+}
+function toggleSubjects(sid){
+  var row = document.getElementById('subjects-' + sid);
+  var btn = row ? document.querySelector('.btn-subjects[onclick*="' + sid + '"]') : null;
+  if (!row) return;
+  var isVisible = row.style.display !== 'none';
+  row.style.display = isVisible ? 'none' : '';
+  if (btn) btn.classList.toggle('active', !isVisible);
 }
 </script>
 
