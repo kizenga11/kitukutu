@@ -145,33 +145,35 @@ $schoolInfo = $summary_json['school'] ?? null;
   </table>
 </div>
 
-<h4>School Summary</h4>
-<?php if($schoolInfo): $sc=$schoolInfo;
-$schoolGpaLive = 0;
-$gpaQL = mysqli_query($conn,"SELECT ROUND(AVG(gpa), 2) as school_gpa FROM (
-    SELECT AVG(CASE 
-        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 75 THEN 1
-        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 65 THEN 2
-        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 3
-        WHEN CAST(m.marks AS DECIMAL(5,1)) >= 30 THEN 4
-        ELSE 5
-    END) as gpa
-    FROM marks m
-    JOIN exam_results_summary ers ON ers.student_id = m.student_id AND ers.exam_id = m.exam_id
-    JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
-    WHERE m.exam_id = '$exam_id' AND m.marks != 'A' AND ers.division != '' AND ers.division IS NOT NULL
-    GROUP BY m.student_id
-) t");
-$gpaRL = mysqli_fetch_assoc($gpaQL);
-if($gpaRL && $gpaRL['school_gpa']) $schoolGpaLive = round($gpaRL['school_gpa'], 2);
-?>
-<p>
-    Average: <?= number_format((float)$sc['school_avg'],2) ?> |
-    Grade: <?= $sc['school_grade'] ?> |
-    Students: <?= (int)($sc['total_students']??0) ?> |
-    School GPA: <?= number_format($schoolGpaLive,2) ?>
-</p>
-<?php endif; ?>
+<div style="display:flex;justify-content:center;margin:14px 0;">
+  <table border="1" style="border-collapse:collapse;width:60%;min-width:320px;text-align:center;font-size:13px;">
+    <tr style="background:#0f2744;color:#fff;"><th colspan="2" style="padding:8px;">School Summary</th></tr>
+    <?php if($schoolInfo): $sc=$schoolInfo;
+    $schoolGpaLive = 0;
+    $gpaQL = mysqli_query($conn,"SELECT ROUND(AVG(gpa), 2) as school_gpa FROM (
+        SELECT AVG(CASE 
+            WHEN CAST(m.marks AS DECIMAL(5,1)) >= 75 THEN 1
+            WHEN CAST(m.marks AS DECIMAL(5,1)) >= 65 THEN 2
+            WHEN CAST(m.marks AS DECIMAL(5,1)) >= 45 THEN 3
+            WHEN CAST(m.marks AS DECIMAL(5,1)) >= 30 THEN 4
+            ELSE 5
+        END) as gpa
+        FROM marks m
+        JOIN exam_results_summary ers ON ers.student_id = m.student_id AND ers.exam_id = m.exam_id
+        JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
+        WHERE m.exam_id = '$exam_id' AND m.marks != 'A' AND ers.division != '' AND ers.division IS NOT NULL
+        GROUP BY m.student_id
+    ) t");
+    $gpaRL = mysqli_fetch_assoc($gpaQL);
+    if($gpaRL && $gpaRL['school_gpa']) $schoolGpaLive = round($gpaRL['school_gpa'], 2);
+    ?>
+    <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">Average</td><td style="padding:6px;"><?= number_format((float)$sc['school_avg'],2) ?>%</td></tr>
+    <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">Grade</td><td style="padding:6px;"><?= $sc['school_grade'] ?></td></tr>
+    <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">Students</td><td style="padding:6px;"><?= (int)($sc['total_students']??0) ?></td></tr>
+    <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">School GPA</td><td style="padding:6px;"><?= number_format($schoolGpaLive,2) ?></td></tr>
+    <?php endif; ?>
+  </table>
+</div>
 
 <h4>Results</h4>
 <table border="1">
@@ -250,7 +252,11 @@ if($gpaRL && $gpaRL['school_gpa']) $schoolGpaLive = round($gpaRL['school_gpa'], 
     </tbody>
 </table>
 
-<h4>Subject Performance Summary</h4>
+<div style="text-align:center;margin-top:20px;">
+  <span style="background:#0f2744;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:700;display:inline-block;">Subject Performance Summary</span>
+</div>
+<div style="display:flex;justify-content:center;margin:10px 0;">
+<table border="1" style="border-collapse:collapse;width:95%;min-width:500px;text-align:center;font-size:12px;">
 <?php
 function competencyLabel($avg){
     if($avg >= 75) return 'Excellent';
@@ -328,30 +334,42 @@ foreach($sg_data_a as &$sg){
 unset($sg);
 ?>
 <?php if (!empty($sg_data_a)): ?>
-<table border="1">
-    <tr>
-        <th>#</th><th>Subject</th><th>A</th><th>B</th><th>C</th><th>D</th><th>F</th>
-        <th>Avg</th><th>Grade</th><th>REG</th><th>SAT</th><th>PASS</th><th>GPA</th><th>Competency</th>
-    </tr>
-    <?php foreach($sg_data_a as $sg): ?>
-    <tr>
-        <td><?= $sg['pos'] ?></td>
-        <td><?= htmlspecialchars($sg['subject_name']) ?></td>
-        <td><?= (int)$sg['grade_a'] ?></td>
-        <td><?= (int)$sg['grade_b'] ?></td>
-        <td><?= (int)$sg['grade_c'] ?></td>
-        <td><?= (int)$sg['grade_d'] ?></td>
-        <td><?= (int)$sg['grade_f'] ?></td>
-        <td><?= number_format((float)$sg['avg_mark'],2) ?></td>
-        <td><?= grade($sg['avg_mark']) ?></td>
-        <td><?= (int)$sg['reg'] ?></td>
-        <td><?= (int)$sg['sat'] ?></td>
-        <td><?= (int)$sg['pass_count'] ?></td>
-        <td><?= number_format((float)$sg['gpa'],2) ?></td>
-        <td><?= competencyLabel($sg['avg_mark']) ?></td>
-    </tr>
-    <?php endforeach; ?>
+  <tr style="background:#0f2744;color:#fff;">
+    <th style="padding:7px;">#</th>
+    <th style="padding:7px;">Subject</th>
+    <th style="padding:7px;">A</th>
+    <th style="padding:7px;">B</th>
+    <th style="padding:7px;">C</th>
+    <th style="padding:7px;">D</th>
+    <th style="padding:7px;">F</th>
+    <th style="padding:7px;">Avg</th>
+    <th style="padding:7px;">Grade</th>
+    <th style="padding:7px;">REG</th>
+    <th style="padding:7px;">SAT</th>
+    <th style="padding:7px;">PASS</th>
+    <th style="padding:7px;">GPA</th>
+    <th style="padding:7px;">Competency</th>
+  </tr>
+  <?php foreach($sg_data_a as $sg): ?>
+  <tr>
+    <td style="padding:5px;"><?= $sg['pos'] ?></td>
+    <td style="padding:5px;"><?= htmlspecialchars($sg['subject_name']) ?></td>
+    <td style="padding:5px;"><?= (int)$sg['grade_a'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['grade_b'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['grade_c'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['grade_d'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['grade_f'] ?></td>
+    <td style="padding:5px;"><?= number_format((float)$sg['avg_mark'],2) ?></td>
+    <td style="padding:5px;"><?= grade($sg['avg_mark']) ?></td>
+    <td style="padding:5px;"><?= (int)$sg['reg'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['sat'] ?></td>
+    <td style="padding:5px;"><?= (int)$sg['pass_count'] ?></td>
+    <td style="padding:5px;"><?= number_format((float)$sg['gpa'],2) ?></td>
+    <td style="padding:5px;"><?= competencyLabel($sg['avg_mark']) ?></td>
+  </tr>
+  <?php endforeach; ?>
 </table>
+</div>
 <?php endif; ?>
 
 <p>Generated: <?= date('d-m-Y H:i') ?></p>
