@@ -175,18 +175,21 @@ $schoolInfo = $summary_json['school'] ?? null;
   </table>
 </div>
 
-<h4>Results</h4>
-<table border="1">
+<div style="text-align:center;margin-top:20px;">
+  <span style="background:#0f2744;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:700;display:inline-block;">Results</span>
+</div>
+<div style="display:flex;justify-content:center;margin:10px 0;">
+<table border="1" style="border-collapse:collapse;width:100%;text-align:center;font-size:12px;">
     <thead>
-        <tr>
-            <th>#</th>
-            <th>Student Name</th>
-            <th>Sex</th>
-            <th>Avg</th>
-            <th>Grade</th>
-            <th>Pts</th>
-            <th>Div</th>
-            <th>Subjects (<?= $mode=='marks'?'Marks':'Grades' ?>)</th>
+        <tr style="background:#0f2744;color:#fff;">
+            <th style="padding:7px;">#</th>
+            <th style="padding:7px;">Student Name</th>
+            <th style="padding:7px;">Sex</th>
+            <th style="padding:7px;">Avg</th>
+            <th style="padding:7px;">Grade</th>
+            <th style="padding:7px;">Pts</th>
+            <th style="padding:7px;">Div</th>
+            <th style="padding:7px;">Subjects (<?= $mode=='marks'?'Marks':'Grades' ?>)</th>
         </tr>
     </thead>
     <tbody>
@@ -200,7 +203,9 @@ $schoolInfo = $summary_json['school'] ?? null;
             ORDER BY ers.position ASC
         ");
 
+        $row_i = 0;
         while($st = mysqli_fetch_assoc($students)):
+            $row_i++;
             $id = $st['id'];
             $first = trim($st['first_name'] ?? '');
             $second = trim($st['second_name'] ?? '');
@@ -238,19 +243,20 @@ $schoolInfo = $summary_json['school'] ?? null;
             $avg_grade = grade($st['average_marks']);
             $div_display = $st['division'] !== '' && $st['division'] !== null ? $st['division'] : '-';
         ?>
-        <tr>
-            <td><?= (int)$st['position'] ?></td>
-            <td><?= htmlspecialchars($full_name) ?></td>
-            <td><?= $st['sex']=='Male'?'M':'F' ?></td>
-            <td><?= number_format((float)$st['average_marks'],2) ?></td>
-            <td><?= $avg_grade ?></td>
-            <td><?= (int)$st['total_points'] ?></td>
-            <td><?= $div_display ?></td>
-            <td><?= htmlspecialchars($subject_string) ?></td>
+        <tr style="background:<?= $row_i % 2 == 0 ? '#f8f9fa' : '#fff' ?>;">
+            <td style="padding:6px;"><?= (int)$st['position'] ?></td>
+            <td style="padding:6px;text-align:left;"><?= htmlspecialchars($full_name) ?></td>
+            <td style="padding:6px;"><?= $st['sex']=='Male'?'M':'F' ?></td>
+            <td style="padding:6px;"><?= number_format((float)$st['average_marks'],2) ?></td>
+            <td style="padding:6px;"><?= $avg_grade ?></td>
+            <td style="padding:6px;"><?= (int)$st['total_points'] ?></td>
+            <td style="padding:6px;"><?= $div_display ?></td>
+            <td style="padding:6px;text-align:left;"><?= htmlspecialchars($subject_string) ?></td>
         </tr>
         <?php endwhile; ?>
     </tbody>
 </table>
+</div>
 
 <div style="text-align:center;margin-top:20px;">
   <span style="background:#0f2744;color:#fff;padding:6px 16px;border-radius:6px;font-size:13px;font-weight:700;display:inline-block;">Subject Performance Summary</span>
