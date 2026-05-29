@@ -10,10 +10,16 @@ if(!isset($_SESSION['admin_id'])){
 $exam_id = intval($_GET['exam_id'] ?? 0);
 $mode = $_GET['mode'] ?? 'grade';
 $form_level_filter = isset($_GET['form_level']) ? mysqli_real_escape_string($conn, $_GET['form_level']) : '';
+$pdf_download = isset($_GET['pdf']);
 
 if(!$exam_id){ die("No exam selected"); }
 
 $school_name = "KITUKUTU TECHNICAL SCHOOL";
+
+if ($pdf_download) {
+    require_once "../vendor/autoload.php";
+    ob_start();
+}
 
 if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_parent_message'])){
     $msg = mysqli_real_escape_string($conn, $_POST['parent_message']);
@@ -91,6 +97,7 @@ function grade($m){
 <p class="no-print">
     <button onclick="history.back()">← Back</button>
     <button onclick="window.print()">Print</button>
+    <a href="?exam_id=<?= $exam_id ?>&mode=<?= $mode ?><?= $form_level_filter ? '&form_level='.urlencode($form_level_filter) : '' ?>&pdf=1" class="btn-pdf">Download PDF</a>
     <a href="?exam_id=<?= $exam_id ?>&mode=grade">Grades</a>
     <a href="?exam_id=<?= $exam_id ?>&mode=marks">Marks</a>
     <?php
@@ -399,6 +406,21 @@ unset($sg);
 <p>Generated: <?= date('d-m-Y H:i') ?></p>
 
 <?php endif; ?>
+
+<?php if ($pdf_download):
+$html = ob_get_clean();
+$options = new Dompdf\Options();
+$options->set('isRemoteEnabled', true);
+$options->set('isHtml5ParserEnabled', true);
+
+$dompdf = new Dompdf\Dompdf($options);
+$dompdf->loadHtml($html);
+$dompdf->setPaper('A4', 'landscape');
+$dompdf->render();
+
+$dompdf->stream("Results_" . preg_replace('/[^a-zA-Z0-9_-]/', '_', $exam_name) . ".pdf", ["Attachment" => true]);
+exit;
+endif; ?>
 
 </body>
 </html>
