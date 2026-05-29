@@ -64,18 +64,25 @@ if (isset($_POST['update_student'])) {
     header("Location: add_student.php"); exit();
 }
 
-/* ── Delete ── */
-if (isset($_GET['delete'])) {
-    $id = intval($_GET['delete']);
-    mysqli_query($conn,"DELETE FROM student_subjects WHERE student_id='$id'");
-    mysqli_query($conn,"DELETE FROM students WHERE id='$id'");
-    $_SESSION['flash'] = ['type'=>'success','msg'=>'Student deleted.'];
+/* ── Toggle inactive ── */
+if (isset($_GET['deactivate'])) {
+    $id = intval($_GET['deactivate']);
+    mysqli_query($conn,"UPDATE students SET is_active=0 WHERE id='$id'");
+    $_SESSION['flash'] = ['type'=>'success','msg'=>'Student deactivated successfully. Data preserved.'];
+    header("Location: add_student.php"); exit();
+}
+
+/* ── Toggle active (reactivate) ── */
+if (isset($_GET['activate'])) {
+    $id = intval($_GET['activate']);
+    mysqli_query($conn,"UPDATE students SET is_active=1 WHERE id='$id'");
+    $_SESSION['flash'] = ['type'=>'success','msg'=>'Student reactivated successfully.'];
     header("Location: add_student.php"); exit();
 }
 
 /* ── Auto-fix: assign compulsory subjects to students missing them ── */
 $fixed = 0;
-$missing = mysqli_query($conn,"SELECT s.id, s.stream FROM students s LEFT JOIN student_subjects ss ON ss.student_id = s.id WHERE ss.student_id IS NULL");
+$missing = mysqli_query($conn,"SELECT s.id, s.stream FROM students s LEFT JOIN student_subjects ss ON ss.student_id = s.id WHERE ss.student_id IS NULL AND s.is_active=1");
 while ($m = mysqli_fetch_assoc($missing)) {
     $comp = mysqli_query($conn,"SELECT id FROM subjects WHERE LOWER(stream)=LOWER('{$m['stream']}') AND LOWER(category)='compulsory'");
     while ($c = mysqli_fetch_assoc($comp)) {
@@ -117,11 +124,18 @@ if (isset($_POST['upload_csv']) && !empty($_FILES['csv_file']['tmp_name'])) {
     header("Location: add_student.php"); exit();
 }
 
-/* ── Students list ── */
-$students_q = mysqli_query($conn,"SELECT * FROM students ORDER BY first_name, last_name");
+/* ── Students list (active only) ── */
+$active_tab = !isset($_GET['show_inactive']);
+$students_q = mysqli_query($conn,"SELECT * FROM students WHERE is_active=1 ORDER BY first_name, last_name");
 $students = [];
 while ($r = mysqli_fetch_assoc($students_q)) $students[] = $r;
-$total = count($students);
+$total_active = count($students);
+
+/* ── Inactive students ── */
+$inactive_q = mysqli_query($conn,"SELECT * FROM students WHERE is_active=0 ORDER BY first_name, last_name");
+$inactive_students = [];
+while ($r = mysqli_fetch_assoc($inactive_q)) $inactive_students[] = $r;
+$total_inactive = count($inactive_students);
 
 $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 if ($fixed > 0 && !$flash) {
@@ -277,7 +291,7 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
     </div>
     <div>
       <div style="font-weight:800;font-size:15px">Students</div>
-      <div style="font-size:11px;color:var(--muted)"><?= $total ?> registered</div>
+      <div style="font-size:11px;color:var(--muted)"><?= $total_active ?> active<?= $total_inactive ? ' &bull; '.$total_inactive.' inactive' : '' ?></div>
     </div>
   </div>
   <?php if ($edit_mode): ?>
@@ -395,8 +409,18 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
   <div class="col-md-7">
     <div class="panel" style="height:100%;">
       <div class="sec-hdr">
-        <i class="bi bi-people-fill"></i> Registered Students
-        <span style="background:var(--primary-light);color:var(--primary-dark);border-radius:20px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:auto"><?= $total ?></span>
+        <i class="bi bi-people-fill"></i> Students
+        <span style="background:var(--primary-light);color:var(--primary-dark);border-radius:20px;padding:1px 9px;font-size:11px;font-weight:700;margin-left:auto"><?= $active_tab ? $total_active : $total_inactive ?></span>
+      </div>
+
+      <!-- Tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:10px;">
+        <a href="add_student.php" style="flex:1;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;<?= $active_tab ? 'background:var(--primary);color:#fff;' : 'background:var(--bg);color:var(--text);' ?>">
+          <i class="bi bi-person-check"></i> Active (<?= $total_active ?>)
+        </a>
+        <a href="?show_inactive=1" style="flex:1;text-align:center;padding:7px;border-radius:8px;font-size:12px;font-weight:600;text-decoration:none;<?= !$active_tab ? 'background:var(--warn);color:#fff;' : 'background:var(--bg);color:var(--text);' ?>">
+          <i class="bi bi-person-dash"></i> Inactive (<?= $total_inactive ?>)
+        </a>
       </div>
 
       <!-- Search -->
@@ -407,10 +431,11 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
 
       <!-- List -->
       <div id="studentList" style="max-height:65vh;overflow-y:auto;padding-right:2px;">
+        <?php if ($active_tab): ?>
         <?php if (empty($students)): ?>
         <div class="empty">
           <i class="bi bi-people"></i>
-          <p>No students registered yet.</p>
+          <p>No active students.</p>
         </div>
         <?php else: ?>
         <?php foreach ($students as $i => $row):
@@ -429,9 +454,37 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
           <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#ede9fe;color:#5b21b6;flex-shrink:0;"><?= $form_label ?></span>
           <span class="stream-pill <?= $is_voc ? 'stream-voc' : 'stream-gen' ?>"><?= htmlspecialchars($row['stream']) ?></span>
           <a href="?edit=<?= $row['id'] ?>" class="act-btn edt" title="Edit"><i class="bi bi-pencil"></i></a>
-          <button class="act-btn del" title="Delete" onclick="confirmDel(<?= $row['id'] ?>, '<?= htmlspecialchars(addslashes($name)) ?>')"><i class="bi bi-trash"></i></button>
+          <button class="act-btn del" title="Deactivate" onclick="confirmDeactivate(<?= $row['id'] ?>, '<?= htmlspecialchars(addslashes($name)) ?>')"><i class="bi bi-person-dash"></i></button>
         </div>
         <?php endforeach; ?>
+        <?php endif; ?>
+        <?php else: ?>
+        <?php if (empty($inactive_students)): ?>
+        <div class="empty">
+          <i class="bi bi-people"></i>
+          <p>No inactive students.</p>
+        </div>
+        <?php else: ?>
+        <?php foreach ($inactive_students as $row):
+          $name = trim($row['first_name'].' '.($row['second_name'] ? $row['second_name'].' ' : '').$row['last_name']);
+          $init = strtoupper(substr($row['first_name'],0,1).substr($row['last_name'],0,1));
+          $is_voc = strtolower($row['stream']) === 'vocational';
+          $av_bg  = $is_voc ? '#9d174d' : '#1e40af';
+          $form_label = str_replace('Form ', 'F. ', $row['form_level'] ?? '');
+        ?>
+        <div class="stu-row" data-search="<?= strtolower(htmlspecialchars($name.' '.$row['sex'].' '.$row['stream'].' '.($row['form_level']??''))) ?>" style="opacity:.65;">
+          <div class="stu-avatar" style="background:<?= $av_bg ?>"><?= $init ?></div>
+            <div class="stu-name">
+              <div class="sn"><?= htmlspecialchars($name) ?></div>
+              <div class="sm"><?= htmlspecialchars($row['sex']) ?> &bull; <?= htmlspecialchars($row['parent_phone'] ?? '') ?> <?= $row['registration_no'] ? '<span style="color:#6366f1;font-weight:600;">&bull; ' . htmlspecialchars($row['registration_no']) . '</span>' : '' ?></div>
+            </div>
+          <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:#ede9fe;color:#5b21b6;flex-shrink:0;"><?= $form_label ?></span>
+          <span class="stream-pill <?= $is_voc ? 'stream-voc' : 'stream-gen' ?>"><?= htmlspecialchars($row['stream']) ?></span>
+          <a href="?edit=<?= $row['id'] ?>" class="act-btn edt" title="Edit"><i class="bi bi-pencil"></i></a>
+          <a href="?activate=<?= $row['id'] ?>" class="act-btn" style="background:#ecfdf5;border-color:#6ee7b7;color:#065f46;" title="Reactivate" onclick="return confirm('Reactivate <?= htmlspecialchars(addslashes($name)) ?>?')"><i class="bi bi-person-check"></i></a>
+        </div>
+        <?php endforeach; ?>
+        <?php endif; ?>
         <?php endif; ?>
       </div>
 
@@ -440,20 +493,20 @@ body{background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:v
 
 </div>
 
-<!-- Delete confirm modal -->
+<!-- Deactivate confirm modal -->
 <div class="modal-backdrop-custom" id="delModal">
   <div class="modal-inner">
     <div style="text-align:center;margin-bottom:16px;">
-      <div style="width:52px;height:52px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;color:var(--danger)">
-        <i class="bi bi-trash3"></i>
+      <div style="width:52px;height:52px;border-radius:50%;background:#fef3c7;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:22px;color:var(--warn)">
+        <i class="bi bi-person-dash"></i>
       </div>
-      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Delete Student?</div>
-      <div style="font-size:13px;color:var(--muted)" id="delName">This action cannot be undone.</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:4px">Deactivate Student?</div>
+      <div style="font-size:13px;color:var(--muted)" id="delName">Student will be hidden from all lists and reports. All data preserved.</div>
     </div>
     <div style="display:flex;gap:8px;">
       <button onclick="document.getElementById('delModal').classList.remove('show')" style="flex:1;padding:10px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
-      <a href="#" id="delLink" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--danger);color:#fff;font-size:13px;font-weight:700;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <i class="bi bi-trash"></i> Delete
+      <a href="#" id="delLink" style="flex:1;padding:10px;border:none;border-radius:10px;background:var(--warn);color:#fff;font-size:13px;font-weight:700;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
+        <i class="bi bi-person-dash"></i> Deactivate
       </a>
     </div>
   </div>
@@ -468,10 +521,10 @@ document.getElementById('searchInput').addEventListener('input', function(){
   });
 });
 
-/* Delete modal */
-function confirmDel(id, name) {
-  document.getElementById('delName').textContent = 'Delete "' + name + '"? This cannot be undone.';
-  document.getElementById('delLink').href = '?delete=' + id;
+/* Deactivate modal */
+function confirmDeactivate(id, name) {
+  document.getElementById('delName').textContent = 'Deactivate "' + name + '"? They will be hidden from all lists, reports, and results. Data is preserved.';
+  document.getElementById('delLink').href = '?deactivate=' + id;
   document.getElementById('delModal').classList.add('show');
 }
 document.getElementById('delModal').addEventListener('click', function(e){

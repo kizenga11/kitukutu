@@ -37,7 +37,7 @@ $exam_parent_msg = $exam_data['parent_message'] ?? '';
 
 $flFilterSql = $form_level_filter ? " AND COALESCE(ers.form_level, s.form_level)='$form_level_filter'" : '';
 
-$chkCountSql = "SELECT COUNT(*) total FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql";
+$chkCountSql = "SELECT COUNT(*) total FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.is_active=1 $flFilterSql";
 $chk = mysqli_query($conn, $chkCountSql);
 $processed = $chk ? (mysqli_fetch_assoc($chk)['total'] > 0) : false;
 
@@ -90,7 +90,7 @@ function grade($m){
     <?php endif; ?>
     <?php
     $streams = [];
-    $st_q = mysqli_query($conn,"SELECT DISTINCT s.stream FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id'");
+    $st_q = mysqli_query($conn,"SELECT DISTINCT s.stream FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.is_active=1");
     if ($st_q) while($st_r=mysqli_fetch_assoc($st_q)) $streams[] = $st_r['stream'];
     if (!empty($streams)):
         foreach($streams as $st): ?>
@@ -107,7 +107,7 @@ $divOrder = ['I','II','III','IV','0','N/A'];
 if($summary_json && isset($summary_json['divisions'])){
     $divisions = $summary_json['divisions'];
 } else {
-    $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql GROUP BY ers.division,s.sex");
+    $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.is_active=1 $flFilterSql GROUP BY ers.division,s.sex");
     $divisions = [];
     while($d=mysqli_fetch_assoc($divQ)){
         $dn = $d['division'] ?: '0';
@@ -193,7 +193,7 @@ if($gpaRL && $gpaRL['school_gpa']) $schoolGpaLive = round($gpaRL['school_gpa'], 
                    ers.total_points, ers.division, ers.position, ers.average_marks
             FROM exam_results_summary ers
             JOIN students s ON s.id = ers.student_id
-            WHERE ers.exam_id = '$exam_id' $flFilterSql
+            WHERE ers.exam_id = '$exam_id' AND s.is_active=1 $flFilterSql
             ORDER BY ers.position ASC
         ");
 

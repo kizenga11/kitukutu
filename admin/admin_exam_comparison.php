@@ -298,9 +298,9 @@ foreach($exam_ids as $eid){
     $stud_maps[$eid] = $map;
 }
 
-$stud_sql = "SELECT id, first_name, second_name, last_name FROM students";
+$stud_sql = "SELECT id, first_name, second_name, last_name FROM students WHERE is_active=1";
 if ($form_level) {
-    $stud_sql .= " WHERE id IN (SELECT DISTINCT student_id FROM marks WHERE form_level = '$form_level')";
+    $stud_sql .= " AND id IN (SELECT DISTINCT student_id FROM marks WHERE form_level = '$form_level')";
 }
 $stud_sql .= " ORDER BY first_name ASC, second_name ASC, last_name ASC";
 $stud_q = mysqli_query($conn, $stud_sql);

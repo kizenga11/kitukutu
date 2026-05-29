@@ -56,7 +56,7 @@ $results = mysqli_query($conn,"
            m.marks
     FROM students st
     JOIN marks m ON st.id=m.student_id
-    WHERE m.subject_id='$subject_id'
+    WHERE st.is_active=1 AND m.subject_id='$subject_id'
     AND m.exam_id='$exam_id'
     AND st.stream='$stream'
     ORDER BY m.marks DESC

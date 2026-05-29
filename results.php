@@ -79,7 +79,7 @@ $results=mysqli_query($conn,"
 SELECT ers.*, 
 st.registration_no
 FROM exam_results_summary ers
-JOIN students st ON ers.student_id=st.id
+JOIN students st ON ers.student_id=st.id AND st.is_active=1
 WHERE ers.exam_id='$exam_id'
 ORDER BY ers.position ASC
 ");

@@ -10,7 +10,7 @@ SELECT * FROM exams WHERE id=$exam_id
 $students = mysqli_query($conn,"
 SELECT s.*, r.*
 FROM exam_results_summary r
-JOIN students s ON s.id=r.student_id
+JOIN students s ON s.id=r.student_id AND s.is_active=1
 WHERE r.exam_id=$exam_id
 ORDER BY r.position ASC
 ");

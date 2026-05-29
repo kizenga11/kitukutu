@@ -25,7 +25,7 @@ ON m2.student_id = m1.student_id
 AND m2.subject_id = m1.subject_id
 AND m2.exam_id = '$compare'
 
-JOIN students st ON st.id = m1.student_id
+JOIN students st ON st.id = m1.student_id AND st.is_active=1
 
 WHERE m1.exam_id = '$current'
 AND m1.subject_id IN (

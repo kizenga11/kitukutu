@@ -122,7 +122,7 @@ $exam_count = count($exams);
             SELECT DISTINCT s.form_level
             FROM marks m
             JOIN students s ON s.id = m.student_id
-            WHERE m.exam_id IN (".implode(',',$exam_ids).")
+            WHERE m.exam_id IN (".implode(',',$exam_ids).") AND s.is_active=1
             ORDER BY s.form_level
         ");
         while ($fl_r = mysqli_fetch_assoc($fl_q)) $form_levels[] = $fl_r['form_level'];
@@ -136,7 +136,7 @@ $exam_count = count($exams);
                 CONCAT(s.first_name,' ',COALESCE(s.second_name,''),' ',s.last_name) AS full_name
             FROM marks m
             JOIN students s ON s.id = m.student_id
-            WHERE m.exam_id IN (".implode(',',$exam_ids).") $flFilterSql
+            WHERE m.exam_id IN (".implode(',',$exam_ids).") AND s.is_active=1 $flFilterSql
             ORDER BY s.stream, s.first_name
         ");
 
@@ -152,7 +152,7 @@ $exam_count = count($exams);
                 SELECT DISTINCT m.student_id
                 FROM marks m
                 JOIN students s ON s.id = m.student_id
-                WHERE m.exam_id IN (".implode(',',$exam_ids).") $flFilterSql
+                WHERE m.exam_id IN (".implode(',',$exam_ids).") AND s.is_active=1 $flFilterSql
             )
             ORDER BY sub.short_name
         ");

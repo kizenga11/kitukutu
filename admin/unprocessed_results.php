@@ -26,7 +26,7 @@ if ($sel_form && $sel_stream && $sel_exam) {
     $stu_q = mysqli_query($conn, "
         SELECT id, first_name, second_name, last_name
         FROM students
-        WHERE stream='$stream' AND form_level='$form_level'
+        WHERE stream='$stream' AND form_level='$form_level' AND is_active=1
         ORDER BY first_name
     ");
 

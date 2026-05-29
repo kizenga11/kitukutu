@@ -9,16 +9,16 @@ $year_id = intval(mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM academic
 $term_id = intval(mysqli_fetch_assoc(mysqli_query($conn,"SELECT id FROM terms WHERE is_active=1 LIMIT 1"))['id'] ?? 0);
 
 $stats = [
-  'students'    => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students"))['c'] ?? 0,
+  'students'    => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE is_active=1"))['c'] ?? 0,
   'teachers'    => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM teachers"))['c'] ?? 0,
   'exams'       => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM exams WHERE is_active=1"))['c'] ?? 0,
   'pending'     => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM admissions WHERE status='Pending'"))['c'] ?? 0,
-  'general'     => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE stream='General'"))['c'] ?? 0,
-  'vocational'  => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE stream='Vocational'"))['c'] ?? 0,
+  'general'     => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE stream='General' AND is_active=1"))['c'] ?? 0,
+  'vocational'  => mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE stream='Vocational' AND is_active=1"))['c'] ?? 0,
 ];
 
 $form_counts = [];
-$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students GROUP BY form_level ORDER BY form_level");
+$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students WHERE is_active=1 GROUP BY form_level ORDER BY form_level");
 if ($fc_q) while ($fc_r = mysqli_fetch_assoc($fc_q)) $form_counts[$fc_r['form_level']] = $fc_r['total'];
 
 $tp = mysqli_fetch_assoc(mysqli_query($conn,"

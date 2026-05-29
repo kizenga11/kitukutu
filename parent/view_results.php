@@ -21,7 +21,7 @@ if (!$check || mysqli_num_rows($check) == 0) {
     exit();
 }
 
-$stu = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM students WHERE id='$student_id'"));
+$stu = mysqli_fetch_assoc(mysqli_query($conn, "SELECT * FROM students WHERE id='$student_id' AND is_active=1"));
 if (!$stu) {
     echo "<div class='alert alert-danger'>Mwanafunzi hakuwa amepatikana.</div>";
     exit();

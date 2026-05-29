@@ -63,7 +63,7 @@ $formFilter = $form_level ? "AND s.form_level='$form_level'" : '';
 $students_q = mysqli_query($conn,
     "SELECT s.* FROM students s
      JOIN student_subjects ss ON ss.student_id=s.id
-     WHERE ss.subject_id='$subject_id' $formFilter
+     WHERE ss.subject_id='$subject_id' AND s.is_active=1 $formFilter
      ORDER BY s.first_name, s.last_name"
 );
 $students = [];

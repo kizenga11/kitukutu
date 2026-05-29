@@ -53,7 +53,7 @@ if ($exam_id && $subject_id) {
                m.marks, m.form_level
         FROM students st
         JOIN marks m ON m.student_id = st.id
-        WHERE m.exam_id = $exam_id AND m.subject_id = $subject_id $fl_filter
+        WHERE st.is_active=1 AND m.exam_id = $exam_id AND m.subject_id = $subject_id $fl_filter
         ORDER BY st.first_name, st.last_name
     ");
 

@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 $parents = mysqli_query($conn, "SELECT * FROM parents ORDER BY first_name");
-$students = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream, registration_no FROM students ORDER BY first_name");
+$students = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream, registration_no FROM students WHERE is_active=1 ORDER BY first_name");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -148,7 +148,7 @@ th{background:var(--primary);color:#fff;font-size:11px;}
   $children = mysqli_query($conn, "
     SELECT s.id, s.first_name, s.second_name, s.last_name, s.form_level, s.stream, s.registration_no, ps.relationship
     FROM parent_students ps
-    JOIN students s ON s.id = ps.student_id
+    JOIN students s ON s.id = ps.student_id AND s.is_active=1
     WHERE ps.parent_id='{$p['id']}'
   ");
 ?>

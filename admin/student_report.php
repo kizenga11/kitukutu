@@ -6,7 +6,7 @@ $student_id = isset($_GET['student_id']) ? (int)$_GET['student_id'] : 0;
 
 if ($exam_id == 0 || $student_id == 0) die("Invalid report parameters.");
 
-$student_query = mysqli_query($conn, "SELECT * FROM students WHERE id = $student_id");
+$student_query = mysqli_query($conn, "SELECT * FROM students WHERE id = $student_id AND is_active=1");
 if (!$student_query || mysqli_num_rows($student_query) == 0) die("Student not found.");
 $stu = mysqli_fetch_assoc($student_query);
 

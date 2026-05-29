@@ -12,7 +12,7 @@ $parent_id = intval($_SESSION['parent_id']);
 $children = mysqli_query($conn, "
     SELECT s.id, s.first_name, s.last_name, s.form_level, s.stream
     FROM parent_students ps
-    JOIN students s ON s.id = ps.student_id
+    JOIN students s ON s.id = ps.student_id AND s.is_active=1
     WHERE ps.parent_id = '$parent_id'
 ");
 

@@ -63,7 +63,7 @@ if ($subject_id && $prev_exam_id && $curr_exam_id) {
         SELECT DISTINCT s.id, s.first_name, s.second_name, s.last_name, s.sex
         FROM students s
         JOIN marks m ON m.student_id = s.id
-        WHERE m.subject_id = $subject_id AND m.exam_id IN ($prev_exam_id, $curr_exam_id) $fl_where
+        WHERE s.is_active=1 AND m.subject_id = $subject_id AND m.exam_id IN ($prev_exam_id, $curr_exam_id) $fl_where
         ORDER BY s.first_name, s.last_name
     ");
 

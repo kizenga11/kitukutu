@@ -180,7 +180,7 @@ body{
 </div>
 
 <?php
-$chk = mysqli_query($conn,"SELECT COUNT(*) as total FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter'");
+$chk = mysqli_query($conn,"SELECT COUNT(*) as total FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.is_active=1 AND s.stream='$stream_filter'");
 $chkR = $chk ? mysqli_fetch_assoc($chk) : ['total'=>0];
 $processed = $chkR['total'] > 0;
 
@@ -195,7 +195,7 @@ $divOrder = ['I','II','III','IV','0','N/A'];
 
 $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c
 FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id
-WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter' AND ers.division!='' AND ers.division IS NOT NULL
+WHERE ers.exam_id='$exam_id' AND s.is_active=1 AND s.stream='$stream_filter' AND ers.division!='' AND ers.division IS NOT NULL
 GROUP BY ers.division,s.sex");
 $divisions = [];
 while($d=mysqli_fetch_assoc($divQ)){
@@ -206,7 +206,7 @@ while($d=mysqli_fetch_assoc($divQ)){
     $divisions[$dn]['total']+=(int)$d['c'];
 }
 
-$schoolQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total, AVG(average_marks) as avg FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.stream='$stream_filter'"));
+$schoolQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total, AVG(average_marks) as avg FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id WHERE ers.exam_id='$exam_id' AND s.is_active=1 AND s.stream='$stream_filter'"));
 $streamTotal = (int)($schoolQ['total']??0);
 $streamAvg = $streamTotal > 0 ? round($schoolQ['avg'],2) : 0;
 $streamGrade = grade($streamAvg);
@@ -225,7 +225,7 @@ $gpaQ = mysqli_query($conn,"SELECT ROUND(AVG(gpa), 2) as stream_gpa FROM (
     JOIN students s ON s.id = m.student_id
     WHERE m.exam_id = '$exam_id' AND m.marks != 'A' 
         AND ers.division != '' AND ers.division IS NOT NULL
-        AND s.stream = '$stream_filter'
+        AND s.is_active=1 AND s.stream = '$stream_filter'
     GROUP BY m.student_id
 ) t");
 $gpaR = mysqli_fetch_assoc($gpaQ);
@@ -296,7 +296,7 @@ $streamGpa = $gpaR ? round($gpaR['stream_gpa'], 2) : 0;
                    ers.total_points, ers.division, ers.average_marks
             FROM exam_results_summary ers
             JOIN students s ON s.id = ers.student_id
-            WHERE ers.exam_id = '$exam_id' AND s.stream = '$stream_filter'
+            WHERE ers.exam_id = '$exam_id' AND s.is_active=1 AND s.stream = '$stream_filter'
             ORDER BY ers.average_marks DESC
         ");
 
@@ -389,7 +389,7 @@ $sg_q = mysqli_query($conn,"
     FROM marks m
     JOIN subjects sbj ON sbj.id = m.subject_id
     JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
-    JOIN students st ON st.id = m.student_id
+    JOIN students st ON st.id = m.student_id AND st.is_active=1
     WHERE m.exam_id = '$exam_id' AND st.stream = '$stream_filter'
     GROUP BY m.subject_id, sbj.subject_name
     ORDER BY avg_mark DESC

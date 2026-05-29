@@ -11,7 +11,7 @@ st.second_name,
 st.last_name,
 s.subject_name
 FROM marks m
-JOIN students st ON st.id=m.student_id
+JOIN students st ON st.id=m.student_id AND st.is_active=1
 JOIN subjects s ON s.id=m.subject_id
 WHERE m.exam_id='$test_id'
 ");

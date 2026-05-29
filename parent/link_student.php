@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['link_student'])) {
     if (empty($regNo)) {
         $error = "Tafadhali ingiza namba ya usajili ya mwanafunzi.";
     } else {
-        $student = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream FROM students WHERE registration_no='$regNo' LIMIT 1");
+        $student = mysqli_query($conn, "SELECT id, first_name, second_name, last_name, form_level, stream FROM students WHERE registration_no='$regNo' AND is_active=1 LIMIT 1");
         if ($student && mysqli_num_rows($student) > 0) {
             $studData = mysqli_fetch_assoc($student);
             $sid = (int) $studData['id'];

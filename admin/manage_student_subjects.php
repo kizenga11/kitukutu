@@ -88,7 +88,7 @@ $flash = $_SESSION['flash'] ?? null; unset($_SESSION['flash']);
 $students_q = mysqli_query($conn, "SELECT s.*,
     (SELECT GROUP_CONCAT(sub.subject_name SEPARATOR ', ') FROM student_subjects ss JOIN subjects sub ON sub.id=ss.subject_id WHERE ss.student_id=s.id ORDER BY sub.subject_name) AS subjects_list,
     (SELECT COUNT(*) FROM student_subjects ss WHERE ss.student_id=s.id) AS subj_count
-    FROM students s ORDER BY s.first_name, s.last_name");
+    FROM students s WHERE s.is_active=1 ORDER BY s.first_name, s.last_name");
 $students = [];
 while ($r = mysqli_fetch_assoc($students_q)) $students[] = $r;
 

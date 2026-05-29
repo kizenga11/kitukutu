@@ -229,7 +229,7 @@ body { background: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; p
                 <?php foreach ($form_levels as $fl):
                     $fl_short = str_replace('Form ', 'F. ', $fl);
                     // Count students & entered for this form + subject
-                    $cnt_q = mysqli_query($conn, "SELECT COUNT(*) as c FROM student_subjects ss JOIN students s ON s.id=ss.student_id WHERE ss.subject_id='{$sub['subject_id']}' AND s.form_level='$fl'");
+                    $cnt_q = mysqli_query($conn, "SELECT COUNT(*) as c FROM student_subjects ss JOIN students s ON s.id=ss.student_id AND s.is_active=1 WHERE ss.subject_id='{$sub['subject_id']}' AND s.form_level='$fl'");
                     $cnt_r = mysqli_fetch_assoc($cnt_q);
                     $t = intval($cnt_r['c']);
                     $e_q = mysqli_query($conn, "SELECT COUNT(*) as c FROM marks m WHERE m.subject_id='{$sub['subject_id']}' AND m.exam_id='{$exam['id']}' AND COALESCE(m.form_level,'$fl')='$fl'");

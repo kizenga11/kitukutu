@@ -244,7 +244,7 @@ body{
   <div class="lp-divider"></div>
   <div class="lp-stats">
     <div class="lp-stat">
-      <div class="lp-stat-n"><?= mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students"))['c'] ?? '—' ?></div>
+      <div class="lp-stat-n"><?= mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) c FROM students WHERE is_active=1"))['c'] ?? '—' ?></div>
       <div class="lp-stat-l">Students</div>
     </div>
     <div class="lp-stat">

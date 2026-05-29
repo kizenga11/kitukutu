@@ -64,7 +64,7 @@ if ($form_level_filter !== '' || true) {
     $stu_q = mysqli_query($conn,"
         SELECT s.id, s.first_name, s.second_name, s.last_name, s.sex, s.form_level, s.stream
         FROM students s
-        WHERE s.id IS NOT NULL $fl_sql
+        WHERE s.is_active=1 $fl_sql
         ORDER BY s.form_level, s.stream, s.first_name
     ");
     while($s = mysqli_fetch_assoc($stu_q)){

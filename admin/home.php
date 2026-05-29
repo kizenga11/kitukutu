@@ -16,12 +16,12 @@ if (($data['role'] ?? '') != 'admin') {
     exit();
 }
 
-$total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students"))['total'] ?? 0;
+$total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students WHERE is_active=1"))['total'] ?? 0;
 $form_counts = [];
-$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students GROUP BY form_level ORDER BY form_level");
+$fc_q = mysqli_query($conn, "SELECT form_level, COUNT(*) as total FROM students WHERE is_active=1 GROUP BY form_level ORDER BY form_level");
 if ($fc_q) while ($fc_r = mysqli_fetch_assoc($fc_q)) $form_counts[$fc_r['form_level']] = $fc_r['total'];
 $stream_counts = [];
-$sc_q = mysqli_query($conn, "SELECT stream, COUNT(*) as total FROM students GROUP BY stream");
+$sc_q = mysqli_query($conn, "SELECT stream, COUNT(*) as total FROM students WHERE is_active=1 GROUP BY stream");
 if ($sc_q) while ($sc_r = mysqli_fetch_assoc($sc_q)) $stream_counts[$sc_r['stream']] = $sc_r['total'];
 $total_teachers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM teachers"))['total'] ?? 0;
 $total_exams = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM exams"))['total'] ?? 0;

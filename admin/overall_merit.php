@@ -30,7 +30,7 @@ st.stream, st.form_level,
 CONCAT(st.first_name,' ',st.second_name,' ',st.last_name) AS full_name
 FROM exam_results_summary ers
 JOIN students st ON ers.student_id=st.id
-WHERE ers.exam_id='$exam_id' $flFilterSql
+WHERE ers.exam_id='$exam_id' AND st.is_active=1 $flFilterSql
 ORDER BY ers.position ASC
 ");
 
@@ -147,18 +147,18 @@ if($summary_json && isset($summary_json['school'])){
     $divisions = $summary_json['divisions'] ?? [];
 } else {
     // fallback: compute on the fly
-    $divQ = mysqli_query($conn,"SELECT ers.division,COUNT(*) as c FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql GROUP BY ers.division");
+    $divQ = mysqli_query($conn,"SELECT ers.division,COUNT(*) as c FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' AND st.is_active=1 $flFilterSql GROUP BY ers.division");
     $divisions = [];
     while($d=mysqli_fetch_assoc($divQ)) $divisions[$d['division']] = ['total'=>(int)$d['c']];
 
-    $sumQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total,AVG(ers.average_marks) as avg FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql"));
+    $sumQ = mysqli_fetch_assoc(mysqli_query($conn,"SELECT COUNT(*) as total,AVG(ers.average_marks) as avg FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' AND st.is_active=1 $flFilterSql"));
     $total_students = (int)$sumQ['total'];
     $school_avg = $sumQ['avg'] ? round((float)$sumQ['avg'],2) : 0;
     $school_grade = schoolGrade($school_avg);
 }
 
 // Grade distribution from stored averages
-$gradQ = mysqli_query($conn,"SELECT ers.average_marks FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' $flFilterSql");
+$gradQ = mysqli_query($conn,"SELECT ers.average_marks FROM exam_results_summary ers JOIN students st ON st.id=ers.student_id WHERE ers.exam_id='$exam_id' AND st.is_active=1 $flFilterSql");
 $gradeCounts = ['A'=>0,'B'=>0,'C'=>0,'D'=>0,'F'=>0];
 while($gr=mysqli_fetch_assoc($gradQ)){
     $g = schoolGrade($gr['average_marks']);

@@ -91,7 +91,7 @@ echo "<option value='{$e['id']}'>{$e['exam_name']}</option>";
 <select name="student_id" class="form-control" required>
 <option value="">Select Student</option>
 <?php
-$stu = mysqli_query($conn,"SELECT * FROM students ORDER BY first_name ASC");
+$stu = mysqli_query($conn,"SELECT * FROM students WHERE is_active=1 ORDER BY first_name ASC");
 while($s=mysqli_fetch_assoc($stu)){
 echo "<option value='{$s['id']}'>{$s['first_name']} {$s['last_name']}</option>";
 }

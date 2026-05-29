@@ -54,7 +54,7 @@ $all_student_gpas = [];
 
 foreach ($form_levels as $form_level) {
     // Get students for this form level (use student's current form_level)
-    $students = mysqli_query($conn,"SELECT DISTINCT m.student_id FROM marks m JOIN students s ON s.id=m.student_id JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id WHERE m.exam_id='$exam_id' AND s.form_level='$form_level'");
+    $students = mysqli_query($conn,"SELECT DISTINCT m.student_id FROM marks m JOIN students s ON s.id=m.student_id AND s.is_active=1 JOIN student_subjects ss ON ss.student_id=m.student_id AND ss.subject_id=m.subject_id WHERE m.exam_id='$exam_id' AND s.form_level='$form_level'");
     if (!$students) continue;
 
     $data=[];
@@ -118,7 +118,7 @@ foreach ($form_levels as $form_level) {
 
     // Build division data per form
     $divQ = mysqli_query($conn,"SELECT ers.division,s.sex,COUNT(*) as c
-    FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id
+    FROM exam_results_summary ers JOIN students s ON s.id=ers.student_id AND s.is_active=1
     WHERE ers.exam_id='$exam_id' AND ers.form_level='$form_level' AND ers.division!='' AND ers.division IS NOT NULL
     GROUP BY ers.division,s.sex");
     while($d=mysqli_fetch_assoc($divQ)){

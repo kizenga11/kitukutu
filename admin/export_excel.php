@@ -86,7 +86,7 @@ $results = mysqli_query($conn,"
 SELECT ers.*, 
 CONCAT(st.first_name,' ',st.second_name,' ',st.last_name) AS full_name
 FROM exam_results_summary ers
-JOIN students st ON ers.student_id=st.id
+JOIN students st ON ers.student_id=st.id AND st.is_active=1
 WHERE ers.exam_id='$exam_id'
 ORDER BY ers.position ASC
 ");

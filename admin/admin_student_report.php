@@ -76,7 +76,7 @@ if ($exam_id == 0) {
             SELECT exam_id FROM exam_form_levels WHERE form_level = '$form_level_filter'
             UNION
             SELECT DISTINCT m.exam_id FROM marks m
-            JOIN students s ON s.id = m.student_id
+            JOIN students s ON s.id = m.student_id AND s.is_active=1
             WHERE COALESCE(NULLIF(m.form_level,''), s.form_level) = '$form_level_filter'
         )
         ORDER BY e.start_date DESC, e.exam_name
@@ -130,7 +130,7 @@ if ($has_summary) {
     $all_summaries = mysqli_query($conn, "
         SELECT ers.*, s.first_name, s.second_name, s.last_name, s.sex, s.stream
         FROM exam_results_summary ers
-        JOIN students s ON s.id = ers.student_id
+        JOIN students s ON s.id = ers.student_id AND s.is_active=1
         WHERE ers.exam_id = $exam_id AND ers.form_level = '$form_level_filter'
         ORDER BY ers.position ASC, s.first_name ASC
     ");
@@ -141,7 +141,7 @@ if ($has_summary) {
     $mark_students = mysqli_query($conn, "
         SELECT DISTINCT m.student_id, s.first_name, s.second_name, s.last_name, s.sex, s.stream
         FROM marks m
-        JOIN students s ON s.id = m.student_id
+        JOIN students s ON s.id = m.student_id AND s.is_active=1
         JOIN student_subjects ss ON ss.student_id = m.student_id AND ss.subject_id = m.subject_id
         WHERE m.exam_id = $exam_id $marks_fl_sql
     ");

@@ -264,7 +264,7 @@ $res = mysqli_query($conn,"
            ers.total_points, ers.division, ers.position, ers.average_marks
     FROM exam_results_summary ers
     JOIN students s ON s.id = ers.student_id
-    WHERE ers.exam_id = '$sel_exam' $fl_filter
+    WHERE ers.exam_id = '$sel_exam' AND s.is_active=1 $fl_filter
     ORDER BY ers.position ASC
 ");
 
