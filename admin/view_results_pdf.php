@@ -56,7 +56,7 @@ table{border-collapse:collapse;margin:0 auto;}
 
 $html .= '<div class="header">
   <div class="l1">IRAMBA DISTRICT COUNCIL</div>
-  <div class="l2">AMALI KITUKUTU SECONDARY SCHOOL</div>
+  <div class="l2">KITUKUTU TECHNICAL SECONDARY SCHOOL</div>
   <div class="l3">P.O BOX 155, IRAMBA</div>
   <div class="l4">'.strtoupper(htmlspecialchars($exam_name)).'</div>
 </div>';

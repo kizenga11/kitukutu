@@ -14,7 +14,7 @@ $mode = $_GET['mode'] ?? 'grade';
 if(!$exam_id) die("No exam selected");
 if(!$stream_filter) die("No stream selected");
 
-$school_name = "KITUKUTU TECHNICAL SCHOOL";
+$school_name = "Kitukutu Technical Secondary School";
 
 $ex = mysqli_query($conn,"SELECT exam_name FROM exams WHERE id='$exam_id'");
 $exam_data = $ex ? mysqli_fetch_assoc($ex) : null;

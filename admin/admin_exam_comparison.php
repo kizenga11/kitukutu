@@ -27,7 +27,7 @@ $selected_count = count($selected);
 
 $fl_filter_sql = $form_level ? " AND form_level = '$form_level'" : '';
 
-$school_name = "Kitukutu Technical School";
+$school_name = "Kitukutu Technical Secondary School";
 ?>
 <!DOCTYPE html>
 <html>

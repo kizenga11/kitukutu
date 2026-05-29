@@ -12,7 +12,7 @@ $mode = $_GET['mode'] ?? 'grade';
 $form_level_filter = isset($_GET['form_level']) ? mysqli_real_escape_string($conn, $_GET['form_level']) : '';
 if(!$exam_id){ die("No exam selected"); }
 
-$school_name = "KITUKUTU TECHNICAL SCHOOL";
+$school_name = "Kitukutu Technical Secondary School";
 
 if($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_parent_message'])){
     $msg = mysqli_real_escape_string($conn, $_POST['parent_message']);
@@ -77,7 +77,7 @@ function grade($m){
 
 <div class="print-header">
   <div class="line1">IRAMBA DISTRICT COUNCIL</div>
-  <div class="line2">AMALI KITUKUTU SECONDARY SCHOOL</div>
+  <div class="line2">KITUKUTU TECHNICAL SECONDARY SCHOOL</div>
   <div class="line3">P.O BOX 155, IRAMBA</div>
   <div class="line4"><?= strtoupper(htmlspecialchars($exam_name)) ?></div>
 </div>

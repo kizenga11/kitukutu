@@ -13,7 +13,7 @@ $flFilterSql = $form_level_filter ? " AND COALESCE(ers.form_level, s.form_level)
 
 if(!$exam_id){ die("No exam selected"); }
 
-$school_name = "KITUKUTU TECHNICAL SCHOOL";
+$school_name = "Kitukutu Technical Secondary School";
 
 $ex = mysqli_query($conn,"SELECT exam_name,summary_json FROM exams WHERE id='$exam_id' AND summary_json IS NOT NULL");
 if(!$ex || mysqli_num_rows($ex) === 0){

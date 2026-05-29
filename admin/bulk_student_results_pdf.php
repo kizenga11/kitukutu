@@ -19,7 +19,7 @@ $selected_exams    = isset($_GET['exams']) ? array_map('intval', (array)$_GET['e
 $form_level_filter = isset($_GET['form_level']) ? mysqli_real_escape_string($conn, $_GET['form_level']) : '';
 $mode = $_GET['mode'] ?? 'grade';
 
-$school_name = "KITUKUTU TECHNICAL SCHOOL";
+$school_name = "Kitukutu Technical Secondary School";
 
 function grade($m){
     if($m >= 75) return 'A';
