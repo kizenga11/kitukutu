@@ -801,7 +801,37 @@ if ($countNull > 0) {
 }
 
 // ──────────────────────────────────────────────────────────
-//  34. Change parent_students unique key — one parent per student
+//  34. Add is_active column to students table (if missing)
+// ──────────────────────────────────────────────────────────
+if (!columnExists($conn, 'students', 'is_active')) {
+    $sql = "ALTER TABLE `students` ADD `is_active` TINYINT(1) NOT NULL DEFAULT 1 AFTER `registration_no`";
+    if (mysqli_query($conn, $sql)) {
+        $results[] = ['msg'=>'Added `is_active` column to `students` table.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add `is_active` column: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'`is_active` column already exists in `students`.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  35. Add index on is_active column for students table
+// ──────────────────────────────────────────────────────────
+$idxCheck = mysqli_query($conn, "SHOW INDEX FROM `students` WHERE Key_name='idx_is_active'");
+if ($idxCheck && mysqli_num_rows($idxCheck) == 0) {
+    if (mysqli_query($conn, "ALTER TABLE `students` ADD INDEX `idx_is_active` (`is_active`)")) {
+        $results[] = ['msg'=>'Added index `idx_is_active` on `students.is_active`.', 'type'=>'ok'];
+    } else {
+        $results[] = ['msg'=>'Failed to add index: ' . mysqli_error($conn), 'type'=>'err'];
+        $hasError = true;
+    }
+} else {
+    $results[] = ['msg'=>'Index `idx_is_active` already exists on `students`.', 'type'=>'skip'];
+}
+
+// ──────────────────────────────────────────────────────────
+//  36. Change parent_students unique key — one parent per student
 // ──────────────────────────────────────────────────────────
 // First, drop FK constraints so we can alter indexes
 $fkDropped = false;
@@ -859,7 +889,7 @@ mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`parent_id`)
 mysqli_query($conn, "ALTER TABLE `parent_students` ADD FOREIGN KEY (`student_id`) REFERENCES `students`(`id`) ON DELETE CASCADE");
 
 // ──────────────────────────────────────────────────────────
-//  35. Create lesson_plan_syllabus table (TIE 2023 Curriculum)
+//  37. Create lesson_plan_syllabus table (TIE 2023 Curriculum)
 // ──────────────────────────────────────────────────────────
 $tblCheck = mysqli_query($conn, "SHOW TABLES LIKE 'lesson_plan_syllabus'");
 if (mysqli_num_rows($tblCheck) == 0) {
@@ -893,7 +923,7 @@ if (mysqli_num_rows($tblCheck) == 0) {
 }
 
 // ──────────────────────────────────────────────────────────
-//  36. Add learning_activities & suggested_resources to lesson_plan_syllabus
+//  38. Add learning_activities & suggested_resources to lesson_plan_syllabus
 // ──────────────────────────────────────────────────────────
 if (!columnExists($conn, 'lesson_plan_syllabus', 'learning_activities')) {
     $sql = "ALTER TABLE `lesson_plan_syllabus` ADD COLUMN `learning_activities` text DEFAULT NULL AFTER `action_word`";
@@ -919,7 +949,7 @@ if (!columnExists($conn, 'lesson_plan_syllabus', 'suggested_resources')) {
 }
 
 // ──────────────────────────────────────────────────────────
-//  37. Add syllabus_id column to topics table
+//  39. Add syllabus_id column to topics table
 // ──────────────────────────────────────────────────────────
 if (!columnExists($conn, 'topics', 'syllabus_id')) {
     $sql = "ALTER TABLE `topics` ADD COLUMN `syllabus_id` int DEFAULT NULL AFTER `topic_name`, ADD KEY `idx_topics_syllabus` (`syllabus_id`)";
@@ -934,7 +964,7 @@ if (!columnExists($conn, 'topics', 'syllabus_id')) {
 }
 
 // ──────────────────────────────────────────────────────────
-//  38. Seed Mathematics & Chemistry syllabus from mathchemistry_seed.sql
+//  40. Seed Mathematics & Chemistry syllabus from mathchemistry_seed.sql
 // ──────────────────────────────────────────────────────────
 $seedFile = __DIR__ . DIRECTORY_SEPARATOR . 'mathchemistry_seed.sql';
 if (file_exists($seedFile)) {
