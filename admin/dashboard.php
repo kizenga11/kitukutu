@@ -21,7 +21,7 @@ if ($data['role'] != 'admin') {
 $admin_email = $data['email'] ?? 'Admin';
 
 // Fetch stats
-$total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students"))['total'];
+$total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students WHERE is_active=1"))['total'];
 $total_teachers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM teachers"))['total'];
 $total_exams = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM exams"))['total'];
 $total_announcements = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM announcements WHERE status='published'"))['total'];
@@ -82,6 +82,7 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
                 <li><a href="manage_student_subjects.php" target="mainFrame"><i class="bi bi-journal-bookmark-fill"></i> Student Subjects</a></li>
                 <li><a href="admissions.php" target="mainFrame"><i class="bi bi-journal-check"></i> Admissions</a></li>
                 <li><a href="manage_parents.php" target="mainFrame"><i class="bi bi-people-fill"></i> Parents</a></li>
+                <li><a href="download_students.php" target="mainFrame"><i class="bi bi-download"></i> Download Students</a></li>
             </ul>
         </li>
 
