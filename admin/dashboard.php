@@ -21,7 +21,8 @@ if ($data['role'] != 'admin') {
 $admin_email = $data['email'] ?? 'Admin';
 
 // Fetch stats
-$total_students = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM students WHERE is_active=1"))['total'];
+$has_active_col = mysqli_num_rows(mysqli_query($conn, "SHOW COLUMNS FROM students LIKE 'is_active'")) > 0;
+$total_students = mysqli_fetch_assoc(mysqli_query($conn, $has_active_col ? "SELECT COUNT(*) as total FROM students WHERE is_active=1" : "SELECT COUNT(*) as total FROM students"))['total'];
 $total_teachers = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM teachers"))['total'];
 $total_exams = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM exams"))['total'];
 $total_announcements = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as total FROM announcements WHERE status='published'"))['total'];

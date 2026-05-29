@@ -804,8 +804,15 @@ if ($countNull > 0) {
 //  34. Add is_active column to students table (if missing)
 // ──────────────────────────────────────────────────────────
 if (!columnExists($conn, 'students', 'is_active')) {
-    $sql = "ALTER TABLE `students` ADD `is_active` TINYINT(1) NOT NULL DEFAULT 1 AFTER `registration_no`";
-    if (mysqli_query($conn, $sql)) {
+    $ok = false;
+    $sql1 = "ALTER TABLE `students` ADD `is_active` TINYINT(1) NOT NULL DEFAULT 1";
+    $sql2 = "ALTER TABLE `students` ADD `is_active` TINYINT(1) NOT NULL DEFAULT 1 AFTER `registration_no`";
+    if (mysqli_query($conn, $sql1)) {
+        $ok = true;
+    } elseif (columnExists($conn, 'students', 'registration_no') && mysqli_query($conn, $sql2)) {
+        $ok = true;
+    }
+    if ($ok) {
         $results[] = ['msg'=>'Added `is_active` column to `students` table.', 'type'=>'ok'];
     } else {
         $results[] = ['msg'=>'Failed to add `is_active` column: ' . mysqli_error($conn), 'type'=>'err'];
