@@ -153,6 +153,7 @@ $schoolInfo = $summary_json['school'] ?? null;
 
 <div style="display:flex;justify-content:center;margin:10px 0;">
   <table border="1" style="border-collapse:collapse;width:60%;min-width:280px;text-align:center;font-size:13px;">
+    <tbody>
     <tr style="background:#0f2744;color:#fff;"><th style="padding:8px;">Div</th><th style="padding:8px;">Boys</th><th style="padding:8px;">Girls</th><th style="padding:8px;">Total</th></tr>
     <?php foreach($divOrder as $d):
         if(!isset($divisions[$d])) continue;
@@ -165,11 +166,13 @@ $schoolInfo = $summary_json['school'] ?? null;
         <td style="padding:6px;"><strong><?= (int)($dd['total']??0) ?></strong></td>
     </tr>
     <?php endforeach; ?>
+    </tbody>
   </table>
 </div>
 
 <div style="display:flex;justify-content:center;margin:14px 0;">
   <table border="1" style="border-collapse:collapse;width:60%;min-width:320px;text-align:center;font-size:13px;">
+    <tbody>
     <tr style="background:#0f2744;color:#fff;"><th colspan="2" style="padding:8px;">School Summary</th></tr>
     <?php if($schoolInfo): $sc=$schoolInfo;
     $schoolGpaLive = 0;
@@ -195,6 +198,7 @@ $schoolInfo = $summary_json['school'] ?? null;
     <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">Students</td><td style="padding:6px;"><?= (int)($sc['total_students']??0) ?></td></tr>
     <tr><td style="padding:6px;font-weight:600;background:#f8f9fa;">School GPA</td><td style="padding:6px;"><?= number_format($schoolGpaLive,2) ?></td></tr>
     <?php endif; ?>
+    </tbody>
   </table>
 </div>
 
@@ -364,6 +368,7 @@ foreach($sg_data_a as &$sg){
 unset($sg);
 ?>
 <?php if (!empty($sg_data_a)): ?>
+  <tbody>
   <tr style="background:#0f2744;color:#fff;">
     <th style="padding:7px;">#</th>
     <th style="padding:7px;">Subject</th>
@@ -398,6 +403,7 @@ unset($sg);
     <td style="padding:5px;"><?= competencyLabel($sg['avg_mark']) ?></td>
   </tr>
   <?php endforeach; ?>
+  </tbody>
 </table>
 </div>
 </div>
