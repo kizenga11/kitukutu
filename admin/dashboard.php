@@ -171,6 +171,17 @@ $recent_announcements = mysqli_query($conn, "SELECT title, content, type, create
             </ul>
         </li>
 
+        <!-- System -->
+        <li class="nav-group">
+            <div class="nav-grp-hdr" onclick="toggleGroup(this)">
+                <span class="gleft"><i class="bi bi-gear-wide-connected"></i> System</span>
+                <i class="bi bi-chevron-down gchev"></i>
+            </div>
+            <ul class="nav-sub">
+                <li><a href="export_database.php" target="mainFrame"><i class="bi bi-database-down"></i> Export Database</a></li>
+            </ul>
+        </li>
+
     </ul>
 </div>
 
